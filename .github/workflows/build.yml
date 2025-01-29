@@ -1,0 +1,31 @@
+name: Build CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install libuuid development headers
+        run: sudo apt-get update && sudo apt-get install -y uuid-dev
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
