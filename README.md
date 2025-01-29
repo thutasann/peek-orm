@@ -42,26 +42,10 @@ yarn build
 yarn test
 ```
 
-**Benchmark**
-
-```bash
-yarn benchmark
-```
-
 **Examples Codes**
 
 ```bash
 yarn example:mysql
-```
-
----
-
-## 📦 **Installation**
-
-You can install **Peek ORM** via npm. Simply run the following command:
-
-```bash
-npm install peek-orm@latest
 ```
 
 ## 🤝 Contributing
