@@ -45,7 +45,7 @@ yarn test
 **Examples Codes**
 
 ```bash
-yarn example:mysql
+yarn example
 ```
 
 ## 🤝 Contributing

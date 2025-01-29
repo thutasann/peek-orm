@@ -89,3 +89,6 @@ next-env.d.ts
 .content-collections
 .source
 !/docs/lib
+
+# mysql
+config.json

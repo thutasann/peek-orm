@@ -4,9 +4,7 @@
       "target_name": "peek-orm",
       "sources": [
         "src/orm/index.c",
-        "src/orm/math_functions.c",
         "src/orm/mysql_functions.c",
-        "src/orm/libraries/maths.c",
         "src/orm/libraries/mysql_lib.c"
       ],
       "include_dirs": [
