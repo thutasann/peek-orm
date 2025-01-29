@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * Test table columns
+ * Test Schema
  * @type {import('../../../lib').CreateTableParams}
  */
 const test_table = {

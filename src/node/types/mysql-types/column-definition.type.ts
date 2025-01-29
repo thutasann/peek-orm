@@ -33,6 +33,14 @@ export type ColumnDefinition = {
    */
   nullable?: boolean
   /**
+   * Scale
+   */
+  scale?: number
+  /**
+   * Precision
+   */
+  precision?: number
+  /**
    * Default value
    */
   default?: string | number | boolean

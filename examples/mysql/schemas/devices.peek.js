@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * Devices table columns
+ * Devices Schema
  * @type {import('../../../lib').CreateTableParams}
  */
 const devices = {
