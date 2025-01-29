@@ -3,9 +3,13 @@ import { CreateTableParams, ConnectParams } from '../types/mysql-types'
 import { readdirSync } from 'fs'
 import { join, resolve } from 'path'
 import fs from 'fs'
+import { logger } from '../utils/logger'
 
 /**
  * MySQL Client
+ * - Connect to MySQL database
+ * @description Singleton MySQL client instance
+ * @author [thutasann](https://github.com/thutasann)
  */
 export class MySQL {
   /**
@@ -45,9 +49,10 @@ export class MySQL {
     this.isConnected = await connectMySQL(host, user, password, database)
 
     if (this.isConnected) {
-      console.log('Connected to MySQL... 🚀')
+      logger.success('Connected to MySQL database\n')
       await this.createTablesFromSchemas(schemasDir)
     } else {
+      logger.error('Failed to connect to MySQL database')
       throw new Error('Failed to connect to MySQL database')
     }
 
@@ -113,7 +118,7 @@ export class MySQL {
       })
       .join(', ')
 
-    console.log(`Creating table ${name} with columns:`, columnDefinitions)
+    logger.info(`TABLE ${name}`, columnDefinitions)
     return createTable(name, columnDefinitions)
   }
 
@@ -131,13 +136,14 @@ export class MySQL {
       try {
         await fs.promises.access(fullPath, fs.constants.R_OK)
       } catch (error) {
+        logger.error(`Schema directory '${schemaDir}' does not exist or is not accessible`)
         throw new Error(`Schema directory '${schemaDir}' does not exist or is not accessible`)
       }
 
       const schemaFiles = readdirSync(fullPath).filter((file) => file.endsWith('.peek.js') || file.endsWith('.peek.ts'))
 
       if (schemaFiles.length === 0) {
-        console.warn(`No .peek.js or .peek.ts schema files found in ${schemaDir}`)
+        logger.warning(`No .peek.js or .peek.ts schema files found in ${schemaDir}`)
         return results
       }
 
@@ -149,15 +155,15 @@ export class MySQL {
             const tableSchema = schema[key]
             if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
               results[tableSchema.name] = await this.createTable(tableSchema)
-              console.log(`Table ${tableSchema.name} created successfully ✅ \n`)
+              logger.success(`Table ${tableSchema.name} created successfully\n`)
             }
           }
         } catch (error) {
-          console.error(`Failed to process schema file ${file}:`, error)
+          logger.error(`Failed to process schema file ${file}`, error)
         }
       }
     } catch (error) {
-      console.error('Failed to read schema directory:', error)
+      logger.error('Failed to read schema directory', error)
     }
 
     return results
