@@ -6,6 +6,7 @@
         "${workspaceFolder}/**",
         "/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers",
         "/usr/local/include/node",
+        "/usr/local/mysql/include",
         "/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys",
         "/Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers"
       ],

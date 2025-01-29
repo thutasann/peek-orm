@@ -1,8 +1,8 @@
 {
   "files.associations": {
+    ".fantomasignore": "ignore",
     "*.mdx": "mdx",
     "*.jade": "jade",
-    ".fantomasignore": "ignore",
     "stdio.h": "c",
     "stdbool.h": "c",
     "string.h": "c",
@@ -53,7 +53,9 @@
     "zlib.h": "c",
     "encode.h": "c",
     "decode.h": "c",
-    "rand.h": "c"
+    "rand.h": "c",
+    "mysql_helper.h": "c",
+    "mysql.h": "c"
   },
   "C_Cpp.errorSquiggles": "enabled"
 }
