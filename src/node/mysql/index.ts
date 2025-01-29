@@ -1,26 +1,5 @@
-import { connectMySQL, closeMySQL } from '../../build/Release/peek-orm.node'
-
-/**
- * MySQL connection parameters
- */
-export type ConnectParams = {
-  /**
-   * MySQL host
-   */
-  host: string
-  /**
-   * MySQL user
-   */
-  user: string
-  /**
-   * MySQL password
-   */
-  password: string
-  /**
-   * MySQL database
-   */
-  database: string
-}
+import { connectMySQL, closeMySQL, createTable } from '../../build/Release/peek-orm.node'
+import { CreateTableParams, ConnectParams } from '../types/mysql-types'
 
 /**
  * MySQL Client
@@ -63,6 +42,48 @@ export class MySQL {
       closeMySQL()
       this.isConnected = false
     }
+  }
+
+  /**
+   * Create a table
+   * @param params - Create table params
+   * @returns {Promise<boolean>} - True if table created successfully, false otherwise
+   */
+  async createTable(params: CreateTableParams): Promise<boolean> {
+    const { name, columns } = params
+    const columnDefinitions = columns
+      .map((column) => {
+        let def = `${column.name} ${column.type}`
+
+        if (column.length) {
+          def += `(${column.length})`
+        }
+
+        if (column.primaryKey) {
+          def += ' PRIMARY KEY'
+        }
+
+        if (column.autoIncrement) {
+          def += ' AUTO_INCREMENT'
+        }
+
+        if (column.unique) {
+          def += ' UNIQUE'
+        }
+
+        if (!column.nullable) {
+          def += ' NOT NULL'
+        }
+
+        if (column.default !== undefined) {
+          def += ` DEFAULT ${typeof column.default === 'string' ? `'${column.default}'` : column.default}`
+        }
+
+        return def
+      })
+      .join(', ')
+
+    return createTable(name, columnDefinitions)
   }
 
   /**

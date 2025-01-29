@@ -43,11 +43,39 @@ napi_value ConnectMySQL(napi_env env, napi_callback_info info) {
     return result;
 }
 
+/** Function to Close MySQL Connection */
 napi_value CloseMySQL(napi_env env, napi_callback_info info) {
     if (conn) {
         mysql_close(conn);
         conn = NULL;
     }
+    napi_value result;
+    napi_get_boolean(env, 1, &result);
+    return result;
+}
+
+/** Function to Create Table */
+napi_value CreateTable(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2];
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    char table_name[256];
+    size_t table_name_len;
+    napi_get_value_string_utf8(env, args[0], table_name, sizeof(table_name), &table_name_len);
+
+    char column_definitions[1024];
+    size_t column_def_len;
+    napi_get_value_string_utf8(env, args[1], column_definitions, sizeof(column_definitions), &column_def_len);
+
+    char query[1300];
+    snprintf(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (%s)", table_name, column_definitions);
+
+    if (mysql_query(conn, query)) {
+        napi_throw_error(env, NULL, mysql_error(conn));
+        return NULL;
+    }
+
     napi_value result;
     napi_get_boolean(env, 1, &result);
     return result;

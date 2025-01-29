@@ -16,7 +16,6 @@ napi_value Add(napi_env env, napi_callback_info info) {
     napi_get_value_double(env, args[1], &value2);
 
     double sum = value1 + value2;
-    printf("Sum: %f\n", sum);
 
     napi_create_double(env, sum, &result);
     return result;

@@ -48,16 +48,10 @@ yarn test
 yarn benchmark
 ```
 
-**Documentation Site**
-
-```bash
-yarn docs
-```
-
 **Examples Codes**
 
 ```bash
-cd examples && yarn dev
+yarn example:mysql
 ```
 
 ---
@@ -69,10 +63,6 @@ You can install **Peek ORM** via npm. Simply run the following command:
 ```bash
 npm install peek-orm@latest
 ```
-
-## 📈 Benchmark
-
-Benchmark Results can be found at [Here](./__test__/benchmark/results/).
 
 ## 🤝 Contributing
 
