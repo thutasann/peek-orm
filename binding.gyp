@@ -10,23 +10,17 @@
         "src/orm/libraries/mysql_lib.c"
       ],
       "include_dirs": [
-        "<!@(node -e \"require('node-addon-api').include\")",
-        "/usr/local/mysql/include",         # Alternate MySQL include path
+        "<!@(node -p \"require('node-addon-api').include\")",
+        "/usr/local/mysql-8.2.0-macos13-arm64/include",
       ],
-      "cflags!": ["-fno-exceptions"],
-      "cflags": [
-        "-std=c11",
-        "-Os",
-        "-ffunction-sections",
-        "-fdata-sections",
-        "-flto"
+      "libraries": [
+        "-lmysqlclient"
       ],
-      "ldflags": [
-        "-Wl,--gc-sections",
-        "-Wl,--strip-all",
-        "-s",
-        "-flto"
-      ]
+      "cflags!": [ "-fno-exceptions" ],
+      "cflags_cc!": [ "-fno-exceptions" ],
+      "xcode_settings": {
+        "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
+      }
     }
   ]
 }

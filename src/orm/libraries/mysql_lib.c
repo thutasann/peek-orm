@@ -21,17 +21,10 @@ napi_value ConnectMySQL(napi_env env, napi_callback_info info) {
     char host[256], user[256], password[256], database[256];
     size_t str_len;
 
-    // Get string values first
     napi_get_value_string_utf8(env, args[0], host, sizeof(host), &str_len);
     napi_get_value_string_utf8(env, args[1], user, sizeof(user), &str_len);
     napi_get_value_string_utf8(env, args[2], password, sizeof(password), &str_len);
     napi_get_value_string_utf8(env, args[3], database, sizeof(database), &str_len);
-
-    printf("Connecting to MySQL...\n");
-    printf("Host: %s\n", host);
-    printf("User: %s\n", user);
-    printf("Password: %s\n", password);
-    printf("Database: %s\n", database);
 
     conn = mysql_init(NULL);
     if (conn == NULL) {
