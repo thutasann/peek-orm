@@ -1,1 +1,1 @@
-console.log('Peek ORM')
+export * from './maths'
