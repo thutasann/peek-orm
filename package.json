@@ -1,0 +1,53 @@
+{
+  "name": "peek-orm",
+  "version": "0.0.0",
+  "description": "A Node.js ORM package using native C.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "benchmark": "cd __test__/benchmark && node index",
+    "build:node": "tsc",
+    "build:gyp": "node-gyp rebuild",
+    "build": "npm run build:gyp && npm run build:node",
+    "docs": "cd docs && npm run dev",
+    "prebuild": "tsc --declaration --emitDeclarationOnly",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "node",
+    "native",
+    "orm",
+    "javascript",
+    "c",
+    "typescript"
+  ],
+  "author": "Thuta Sann",
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.8.1",
+    "jest": "^29.7.0",
+    "node-gyp": "^9.0.0",
+    "prettier": "^3.3.3",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "build/Release/peek-orm.node",
+    "lib/**/*",
+    "src/node/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thutasann/peek-orm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thutasann/peek-orm/issues"
+  },
+  "homepage": "https://github.com/thutasann/peek-orm#readme"
+}
