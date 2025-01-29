@@ -4,6 +4,7 @@
 #include <node_api.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 MYSQL *conn;
 
@@ -54,7 +55,7 @@ napi_value CloseMySQL(napi_env env, napi_callback_info info) {
     return result;
 }
 
-/** Function to Create Table */
+/** Function to Create or Update Table */
 napi_value CreateTable(napi_env env, napi_callback_info info) {
     size_t argc = 2;
     napi_value args[2];
@@ -64,19 +65,79 @@ napi_value CreateTable(napi_env env, napi_callback_info info) {
     size_t table_name_len;
     napi_get_value_string_utf8(env, args[0], table_name, sizeof(table_name), &table_name_len);
 
-    char column_definitions[1024];
-    size_t column_def_len;
-    napi_get_value_string_utf8(env, args[1], column_definitions, sizeof(column_definitions), &column_def_len);
+    char new_columns[2048];
+    size_t new_columns_len;
+    napi_get_value_string_utf8(env, args[1], new_columns, sizeof(new_columns), &new_columns_len);
 
-    char query[1300];
-    snprintf(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (%s)", table_name, column_definitions);
-
+    char query[512];
+    snprintf(query, sizeof(query), "SHOW TABLES LIKE '%s'", table_name);
     if (mysql_query(conn, query)) {
         napi_throw_error(env, NULL, mysql_error(conn));
         return NULL;
     }
 
-    napi_value result;
-    napi_get_boolean(env, 1, &result);
-    return result;
+    MYSQL_RES *result = mysql_store_result(conn);
+    int table_exists = mysql_num_rows(result) > 0;
+    mysql_free_result(result);
+
+    if (!table_exists) {
+        char create_query[4096];
+        snprintf(create_query, sizeof(create_query), "CREATE TABLE %s (%s)", table_name, new_columns);
+        if (mysql_query(conn, create_query)) {
+            napi_throw_error(env, NULL, mysql_error(conn));
+            return NULL;
+        }
+    } else {
+        snprintf(query, sizeof(query), "SHOW COLUMNS FROM %s", table_name);
+        if (mysql_query(conn, query)) {
+            napi_throw_error(env, NULL, mysql_error(conn));
+            return NULL;
+        }
+
+        result = mysql_store_result(conn);
+        char existing_columns[2048] = "";
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result))) {
+            strcat(existing_columns, row[0]);
+            strcat(existing_columns, ",");
+        }
+        mysql_free_result(result);
+
+        // Add missing columns and track which ones exist
+        char *token = strtok(new_columns, ",");
+        char columns_to_keep[2048] = "";
+        while (token != NULL) {
+            char column[256];
+            strncpy(column, token, sizeof(column) - 1);
+            column[sizeof(column) - 1] = '\0';
+
+            char column_name[256];
+            sscanf(column, "%255s", column_name);
+
+            if (!strstr(existing_columns, column_name)) {
+                char alter_query[512];
+                snprintf(alter_query, sizeof(alter_query), "ALTER TABLE %s ADD COLUMN %s", table_name, column);
+                mysql_query(conn, alter_query);
+            }
+
+            strcat(columns_to_keep, column_name);
+            strcat(columns_to_keep, ",");
+            token = strtok(NULL, ",");
+        }
+
+        // Drop extra columns
+        char *existing_col = strtok(existing_columns, ",");
+        while (existing_col != NULL) {
+            if (!strstr(columns_to_keep, existing_col)) {
+                char drop_query[512];
+                snprintf(drop_query, sizeof(drop_query), "ALTER TABLE %s DROP COLUMN %s", table_name, existing_col);
+                mysql_query(conn, drop_query);
+            }
+            existing_col = strtok(NULL, ",");
+        }
+    }
+
+    napi_value result_value;
+    napi_get_boolean(env, 1, &result_value);
+    return result_value;
 }

@@ -5,13 +5,22 @@ import { CreateTableParams, ConnectParams } from '../types/mysql-types'
  * MySQL Client
  */
 export class MySQL {
+  /**
+   * MySQL client instance
+   */
   private static instance: MySQL
+
+  /**
+   * Is connected to MySQL database
+   */
   private isConnected: boolean = false
 
   private constructor() {}
 
   /**
    * Get MySQL client instance
+   * @description Singleton MySQL client instance
+   * @returns {MySQL} MySQL client instance
    */
   static client(): MySQL {
     if (!MySQL.instance) {
@@ -22,6 +31,8 @@ export class MySQL {
 
   /**
    * Connect to MySQL database
+   * @param config - Connect params
+   * @returns {Promise<MySQL>} - MySQL client instance
    */
   async connect(config: ConnectParams): Promise<MySQL> {
     const { host, user, password, database } = config
@@ -36,6 +47,7 @@ export class MySQL {
 
   /**
    * Close MySQL connection
+   * @returns {Promise<void>} Promise that resolves when the connection is closed
    */
   async disconnect(): Promise<void> {
     if (this.isConnected) {
@@ -47,7 +59,7 @@ export class MySQL {
   /**
    * Create a table
    * @param params - Create table params
-   * @returns {Promise<boolean>} - True if table created successfully, false otherwise
+   * @returns {Promise<boolean>} True if table created successfully, false otherwise
    */
   async createTable(params: CreateTableParams): Promise<boolean> {
     const { name, columns } = params
@@ -88,6 +100,7 @@ export class MySQL {
 
   /**
    * Check if connected to database
+   * @returns {boolean} True if connected to database, false otherwise
    */
   get connected(): boolean {
     return this.isConnected
