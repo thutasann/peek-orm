@@ -1,8 +1,8 @@
 import { MySQL, select } from '../../lib'
 import { connectParams } from './configs/db'
 
-function get_customers() {
-  return select('customers', (qb) => qb.select(['customer_id', 'first_name', 'email']))
+async function get_customers() {
+  return await select('customers', (qb) => qb.select(['customer_id', 'first_name', 'email']))
 }
 
 async function main() {
