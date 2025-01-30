@@ -1,12 +1,11 @@
-import { select as selectQuery } from '../../build/Release/peek-orm.node'
-import { SelectQueryBuilder } from '../types'
+import { insert as insertQuery, select as selectQuery } from '../../build/Release/peek-orm.node'
+import { InsertOptions, SelectQueryBuilder } from '../types'
 import { createQueryBuilder } from './query-builder'
 
 /**
  * ## Peek ORM
  * @description
- * - Peek ORM is a simple ORM for MySQL
- * - It is built on top of the MySQL C API and designed to be fast, simple and easy to use
+ * Peek ORM is a fast, simple and easy to use ORM for MySQL built on top of the MySQL C API
  * @author [thutasann](https://github.com/thutasann)
  */
 export class peek {
@@ -43,5 +42,19 @@ export class peek {
     const finalQuery = query.getQuery()
     const result = await selectQuery(finalQuery)
     return result[0] as unknown as T
+  }
+
+  /**
+   * Execute an INSERT query on a table
+   * @param table - Name of the table to insert into
+   * @param values - Values to insert
+   * @returns {Promise<void>} - Promise that resolves when the insert is complete
+   */
+  static async insert<T extends Record<string, any>>(table: string, values: InsertOptions<T>): Promise<void> {
+    const queryBuilder = createQueryBuilder<T>()
+    queryBuilder.from(table)
+    queryBuilder.insert(values)
+    const finalQuery = queryBuilder.getQuery()
+    return insertQuery(finalQuery)
   }
 }

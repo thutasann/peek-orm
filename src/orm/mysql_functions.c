@@ -3,7 +3,7 @@
 
 /** Init MySQL functions */
 void InitMySQLFunctions(napi_env env, napi_value exports) {
-    napi_value connectFn, closeFn, createTableFn, selectFn, initializeFn, cleanupFn;
+    napi_value connectFn, closeFn, createTableFn, selectFn, initializeFn, cleanupFn, insertFn;
 
     napi_create_function(env, NULL, 0, ConnectMySQL, NULL, &connectFn);
     napi_set_named_property(env, exports, "connectMySQL", connectFn);
@@ -22,4 +22,7 @@ void InitMySQLFunctions(napi_env env, napi_value exports) {
 
     napi_create_function(env, NULL, 0, Cleanup, NULL, &cleanupFn);
     napi_set_named_property(env, exports, "cleanup", cleanupFn);
+
+    napi_create_function(env, NULL, 0, Insert, NULL, &insertFn);
+    napi_set_named_property(env, exports, "insert", insertFn);
 }

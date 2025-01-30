@@ -59,3 +59,8 @@ export interface SelectOptions<T> {
   /** Number of rows to skip */
   offset?: number
 }
+
+export interface InsertOptions<T> {
+  columns?: string[]
+  values?: T[]
+}

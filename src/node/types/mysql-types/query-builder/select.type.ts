@@ -1,4 +1,4 @@
-import { WhereCondition } from './condition.type'
+import { InsertOptions, WhereCondition } from './condition.type'
 
 /**
  * Interface for building SQL SELECT queries in a fluent, chainable manner.
@@ -155,37 +155,10 @@ export interface SelectQueryBuilder<T = any> {
   getQuery(): string
 
   /**
-   * Executes the query and returns all matching results
-   * @returns Promise resolving to an array of results
+   * Adds an INSERT INTO clause to the query
+   * @param options - Insert options
    * @example
-   * const users = await queryBuilder
-   *   .select('*')
-   *   .from('users')
-   *   .where({ status: 'active' })
-   *   .execute()
+   * .insert({ columns: ['name', 'email'], values: [{ name: 'John', email: 'john@example.com' }] })
    */
-  execute(): Promise<T[]>
-
-  /**
-   * Executes the query and returns the first result
-   * @returns Promise resolving to a single result or null if none found
-   * @example
-   * const user = await queryBuilder
-   *   .select('*')
-   *   .from('users')
-   *   .where({ id: 1 })
-   *   .getOne()
-   */
-  getOne(): Promise<T | null>
-
-  /**
-   * Executes a COUNT query and returns the number of matching rows
-   * @returns Promise resolving to the count of matching rows
-   * @example
-   * const activeUserCount = await queryBuilder
-   *   .from('users')
-   *   .where({ status: 'active' })
-   *   .getCount()
-   */
-  getCount(): Promise<number>
+  insert(options: InsertOptions<T>): SelectQueryBuilder<T>
 }

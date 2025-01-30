@@ -1,4 +1,4 @@
-import { SelectQueryBuilder } from '../../types'
+import { InsertOptions, SelectQueryBuilder } from '../../types'
 
 /**
  * MySQL Query Builder Implementation
@@ -15,6 +15,7 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   private limitValue?: number
   private offsetValue?: number
   private nativeQuery?: string
+  private insertedValues?: { columns: string[]; values: any[][] }
 
   select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
     if (columns === '*') {
@@ -121,91 +122,103 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  getQuery(): string {
-    if (this.nativeQuery) {
-      return this.nativeQuery
+  insert(options: InsertOptions<T>): SelectQueryBuilder<T> {
+    const { columns, values } = options
+
+    if (!columns?.length || !values?.length) {
+      throw new Error('Both columns and values must be provided for insert')
     }
+
+    const rows = values.map((row) => {
+      return columns.map((col) => {
+        const value = row[col as keyof typeof row]
+        if (value === undefined) {
+          throw new Error(`Missing value for column '${String(col)}'`)
+        }
+        return typeof value === 'string' ? `'${value}'` : value
+      })
+    })
+
+    this.insertedValues = {
+      columns: columns as string[],
+      values: rows,
+    }
+
+    return this
+  }
+
+  getQuery(): string {
+    if (this.nativeQuery) return this.nativeQuery
 
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
 
     const parts: string[] = []
 
-    // SELECT clause
-    const columns = this.selectedColumns.map((col) => {
-      return col === '*' ? col : col.toString()
-    })
-    parts.push(`SELECT ${columns.join(', ')}`)
-
-    // FROM clause
-    parts.push(`FROM ${this.tableName}`)
-
-    // JOIN clauses
-    if (this.joinClauses.length > 0) {
-      parts.push(this.joinClauses.join(' '))
-    }
-
-    // WHERE clause
-    if (this.whereConditions.length > 0) {
-      parts.push(`WHERE ${this.whereConditions.join(' AND ')}`)
-    }
-
-    // GROUP BY clause
-    if (this.groupByColumns.length > 0) {
-      parts.push(`GROUP BY ${this.groupByColumns.join(', ')}`)
-    }
-
-    // HAVING clause
-    if (this.havingConditions.length > 0) {
-      parts.push(`HAVING ${this.havingConditions.join(' AND ')}`)
-    }
-
-    // ORDER BY clause
-    if (this.orderByStatements.length > 0) {
-      const orderByCols = this.orderByStatements.map((stmt) => {
-        const [col, direction] = stmt.split(' ')
-        return `${col} ${direction}`
+    // INSERT
+    if (this.insertedValues) {
+      const { columns, values } = this.insertedValues
+      const columnsList = columns.join(', ')
+      const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
+      parts.push(`INSERT INTO ${this.tableName} (${columnsList}) VALUES ${valuesList}`)
+    } else {
+      // SELECT clause
+      const columns = this.selectedColumns.map((col) => {
+        return col === '*' ? col : col.toString()
       })
-      parts.push(`ORDER BY ${orderByCols.join(', ')}`)
-    }
+      parts.push(`SELECT ${columns.join(', ')}`)
 
-    // LIMIT and OFFSET
-    if (this.limitValue !== undefined) {
-      if (!Number.isInteger(this.limitValue) || this.limitValue < 0) {
-        throw new Error('LIMIT value must be a non-negative integer')
-      }
-      parts.push(`LIMIT ${this.limitValue}`)
-    }
+      // FROM clause
+      parts.push(`FROM ${this.tableName}`)
 
-    if (this.offsetValue !== undefined) {
-      if (!Number.isInteger(this.offsetValue) || this.offsetValue < 0) {
-        throw new Error('OFFSET value must be a non-negative integer')
+      // JOIN clauses
+      if (this.joinClauses.length > 0) {
+        parts.push(this.joinClauses.join(' '))
       }
-      parts.push(`OFFSET ${this.offsetValue}`)
+
+      // WHERE clause
+      if (this.whereConditions.length > 0) {
+        parts.push(`WHERE ${this.whereConditions.join(' AND ')}`)
+      }
+
+      // GROUP BY clause
+      if (this.groupByColumns.length > 0) {
+        parts.push(`GROUP BY ${this.groupByColumns.join(', ')}`)
+      }
+
+      // HAVING clause
+      if (this.havingConditions.length > 0) {
+        parts.push(`HAVING ${this.havingConditions.join(' AND ')}`)
+      }
+
+      // ORDER BY clause
+      if (this.orderByStatements.length > 0) {
+        const orderByCols = this.orderByStatements.map((stmt) => {
+          const [col, direction] = stmt.split(' ')
+          return `${col} ${direction}`
+        })
+        parts.push(`ORDER BY ${orderByCols.join(', ')}`)
+      }
+
+      // LIMIT
+      if (this.limitValue !== undefined) {
+        if (!Number.isInteger(this.limitValue) || this.limitValue < 0) {
+          throw new Error('LIMIT value must be a non-negative integer')
+        }
+        parts.push(`LIMIT ${this.limitValue}`)
+      }
+
+      // OFFSET
+      if (this.offsetValue !== undefined) {
+        if (!Number.isInteger(this.offsetValue) || this.offsetValue < 0) {
+          throw new Error('OFFSET value must be a non-negative integer')
+        }
+        parts.push(`OFFSET ${this.offsetValue}`)
+      }
     }
 
     const finalQuery = parts.join(' ') + ';'
+    console.log('finalQuery ==> ', finalQuery)
     return finalQuery
-  }
-
-  /**
-   * Execute the query (to be implemented in MySQL class)
-   */
-  execute(): Promise<T[]> {
-    throw new Error('Execute method should be called through MySQL client')
-  }
-
-  /**
-   * Get one result (to be implemented in MySQL class)
-   */
-  getOne(): Promise<T | null> {
-    throw new Error('GetOne method should be called through MySQL client')
-  }
-
-  /**
-   * Get count (to be implemented in MySQL class)
-   */
-  getCount(): Promise<number> {
-    throw new Error('GetCount method should be called through MySQL client')
   }
 }
 

@@ -9,5 +9,6 @@ napi_value CreateTable(napi_env env, napi_callback_info info);
 napi_value Select(napi_env env, napi_callback_info info);
 napi_value Initialize(napi_env env, napi_callback_info info);
 napi_value Cleanup(napi_env env, napi_callback_info info);
+napi_value Insert(napi_env env, napi_callback_info info);
 
 #endif
