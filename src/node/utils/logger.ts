@@ -1,4 +1,4 @@
-const COLORS = {
+export const COLORS = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
   blue: '\x1b[34m',

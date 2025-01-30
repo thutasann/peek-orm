@@ -2,7 +2,7 @@ import fs, { readdirSync } from 'fs'
 import { join, resolve } from 'path'
 import { cleanup as cleanupFn, closeMySQL, createTable, initialize } from '../../build/Release/peek-orm.node'
 import { ConnectParams, CreateTableParams } from '../types/mysql-types'
-import { logger } from '../utils/logger'
+import { COLORS, logger } from '../utils/logger'
 import { CacheManager } from './cache-manager'
 
 /**
@@ -60,7 +60,6 @@ export class MySQL {
       })
       .join(', ')
 
-    logger.info(`TABLE ${name}`, columnDefinitions)
     return createTable(name, columnDefinitions)
   }
 
@@ -103,7 +102,7 @@ export class MySQL {
               const tableSchema = schema[key]
               if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
                 results[tableSchema.name] = await this.createTable(tableSchema)
-                logger.success(`Table ${tableSchema.name} created/updated from ${file}\n`)
+                logger.success(`Table ${COLORS.blue}${tableSchema.name}${COLORS.reset} created/updated from ${file}`)
               }
             }
           } else {
@@ -112,7 +111,7 @@ export class MySQL {
               const tableSchema = cachedSchema.schema[key]
               if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
                 results[tableSchema.name] = await this.createTable(tableSchema)
-                logger.success(`Table ${tableSchema.name} loaded from cache\n`)
+                logger.success(`Table ${COLORS.blue}${tableSchema.name}${COLORS.reset} loaded from cache`)
               }
             }
           }
