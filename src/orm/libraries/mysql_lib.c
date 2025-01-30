@@ -149,49 +149,41 @@ napi_value Select(napi_env env, napi_callback_info info) {
     napi_value args[2], result;
     napi_get_cb_info(env, info, &argc, args, NULL, NULL);
 
-    char table[256], query_string[1024] = "";
-    napi_get_value_string_utf8(env, args[0], table, sizeof(table), NULL);
-    napi_get_value_string_utf8(env, args[1], query_string, sizeof(query_string), NULL);
-
-    // Parse the query string to extract columns if specified
-    char columns[512] = "*"; // Default to all columns
+    char table[256], columns[256] = "*";
     char conditions[512] = "";
-    char limit[64] = "";
+    napi_get_value_string_utf8(env, args[0], table, sizeof(table), NULL);
 
-    if (strlen(query_string) > 0) {
-        char *select_str = strstr(query_string, "SELECT ");
-        if (select_str) {
-            sscanf(select_str + 7, "%511[^WHERE]", columns);
-            // Remove trailing spaces
-            char *end = columns + strlen(columns) - 1;
-            while (end > columns && isspace(*end))
-                *end-- = '\0';
+    if (argc > 1) {
+        char query_string[1024];
+        napi_get_value_string_utf8(env, args[1], query_string, sizeof(query_string), NULL);
+
+        // Step 1: Extract column names from "SELECT column FROM" format
+        if (strncmp(query_string, "SELECT ", 7) == 0) {
+            char *from_pos = strstr(query_string + 7, " FROM");
+            if (from_pos) {
+                size_t col_len = from_pos - (query_string + 7);
+                strncpy(columns, query_string + 7, col_len);
+                columns[col_len] = '\0';
+            }
         }
 
-        char *where_str = strstr(query_string, "WHERE ");
-        if (where_str) {
-            sscanf(where_str + 6, "%511[^LIMIT]", conditions);
-            // Remove trailing spaces
-            char *end = conditions + strlen(conditions) - 1;
-            while (end > conditions && isspace(*end))
-                *end-- = '\0';
-        }
-
-        char *limit_str = strstr(query_string, "LIMIT ");
-        if (limit_str) {
-            sscanf(limit_str + 6, "%63s", limit);
+        // Step 2: Extract WHERE conditions if present
+        char *where_pos = strstr(query_string, " WHERE ");
+        if (where_pos) {
+            strncpy(conditions, where_pos + 7, sizeof(conditions) - 1); // +7 to skip " WHERE "
+            conditions[sizeof(conditions) - 1] = '\0';                  // Ensure null termination
         }
     }
 
-    // Construct the final query
+    // Construct the query with specified columns and conditions
     char query[2048];
-    snprintf(query, sizeof(query), "SELECT %s FROM %s%s%s%s%s",
-             columns,
-             table,
-             strlen(conditions) > 0 ? " WHERE " : "",
-             conditions,
-             strlen(limit) > 0 ? " LIMIT " : "",
-             limit);
+    if (strlen(conditions) > 0) {
+        snprintf(query, sizeof(query), "SELECT %s FROM %s WHERE %s",
+                 columns, table, conditions);
+    } else {
+        snprintf(query, sizeof(query), "SELECT %s FROM %s",
+                 columns, table);
+    }
 
     MYSQL_RES *res;
     if (mysql_query(conn, query) == 0) {

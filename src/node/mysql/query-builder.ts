@@ -5,7 +5,7 @@ import { SelectQueryBuilder } from '../types'
  * @template T - Type of the entity being queried
  */
 export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
-  private selectedColumns: string[] = ['*']
+  private selectedColumns: Array<keyof T | '*'> = ['*']
   private tableName: string = ''
   private whereConditions: string[] = []
   private joinClauses: string[] = []
@@ -18,8 +18,12 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   /**
    * Specify columns to select
    */
-  select(columns: keyof T | Array<keyof T>): SelectQueryBuilder<T> {
-    this.selectedColumns = Array.isArray(columns) ? (columns as string[]) : [columns as string]
+  select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
+    if (columns === '*') {
+      this.selectedColumns = ['*']
+    } else {
+      this.selectedColumns = Array.isArray(columns) ? columns : [columns]
+    }
     return this
   }
 
@@ -192,7 +196,10 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
       parts.push(`OFFSET ${this.offsetValue}`)
     }
 
-    return parts.join(' ')
+    const finalQuery = parts.join(' ')
+    console.log('SELECT query ==>', finalQuery)
+
+    return finalQuery
   }
 
   /**

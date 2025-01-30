@@ -7,7 +7,7 @@ export interface SelectQueryBuilder<T = any> {
    * Specifies the columns to select in the query
    * @param columns - Single column name or array of column names
    */
-  select(columns: keyof T | Array<keyof T>): SelectQueryBuilder<T>
+  select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T>
 
   /**
    * Specifies the table to select from

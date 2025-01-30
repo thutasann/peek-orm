@@ -70,7 +70,12 @@ export const devices: CreateTableParams<Devices> = {
 ```ts
 import { select } from 'peek-orm'
 
-const customers = await select('customers', (qb) => qb.select(['customer_id', 'first_name', 'email']))
+async function get_devices() {
+  const data = await select<Devices>('devices', (qb) => qb.select('*').where({ name: 'device 1' }))
+  return data
+}
+
+const devices = await get_devices() // [ { name: 'device 1', device_type: 'laptop' } ]
 ```
 
 ---
