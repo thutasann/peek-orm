@@ -18,17 +18,17 @@ export async function get_devices_native(): Promise<Devices[]> {
 
 export async function insert_device(): Promise<void> {
   const response = await peek.insert<Devices>('devices', {
-    name: 'device 14',
+    name: 'device 17',
     device_type: 'car',
-    sell_price: 1000,
+    sell_price: 2000,
   })
   console.log('response ==> ', response)
 }
 
 export async function insert_multiple_devices(): Promise<void> {
   const response = await peek.insert<Devices>('devices', [
-    { name: 'device 14', device_type: 'car' },
-    { name: 'device 15', device_type: 'bike' },
+    { name: 'device 25', device_type: 'car', sell_price: 4000 },
+    { name: 'device 29', device_type: 'bike', sell_price: 5000 },
   ])
   console.log('response ==> ', response)
 }

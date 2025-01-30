@@ -1,21 +1,22 @@
 import { SelectQueryBuilder } from '../../types'
+import { BuildQueryHelper } from './build-query-helper'
 
 /**
  * MySQL Query Builder Implementation
  * @template T - Type of the entity being queried
  */
-class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
-  private selectedColumns: Array<keyof T | '*'> = ['*']
-  private tableName: string = ''
-  private whereConditions: string[] = []
-  private joinClauses: string[] = []
-  private groupByColumns: string[] = []
-  private havingConditions: string[] = []
-  private orderByStatements: string[] = []
-  private limitValue?: number
-  private offsetValue?: number
-  private nativeQuery?: string
-  private insertedValues?: { columns: string[]; values: any[][] }
+export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
+  public selectedColumns: Array<keyof T | '*'> = ['*']
+  public tableName: string = ''
+  public whereConditions: string[] = []
+  public joinClauses: string[] = []
+  public groupByColumns: string[] = []
+  public havingConditions: string[] = []
+  public orderByStatements: string[] = []
+  public limitValue?: number
+  public offsetValue?: number
+  public nativeQuery?: string
+  public insertedValues?: { columns: string[]; values: any[][] }
 
   select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
     if (columns === '*') {
@@ -147,80 +148,20 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
 
   getQuery(): string {
     if (this.nativeQuery) return this.nativeQuery
-
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
 
-    const parts: string[] = []
+    const parts = this.insertedValues
+      ? [BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues)]
+      : BuildQueryHelper.buildSelectQuery(this)
 
-    // INSERT
-    if (this.insertedValues) {
-      const { columns, values } = this.insertedValues
-      const columnsList = columns.join(', ')
-      const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
-      parts.push(`INSERT INTO ${this.tableName} (${columnsList}) VALUES ${valuesList}`)
-    } else {
-      // SELECT clause
-      const columns = this.selectedColumns.map((col) => {
-        return col === '*' ? col : col.toString()
-      })
-      parts.push(`SELECT ${columns.join(', ')}`)
-
-      // FROM clause
-      parts.push(`FROM ${this.tableName}`)
-
-      // JOIN clauses
-      if (this.joinClauses.length > 0) {
-        parts.push(this.joinClauses.join(' '))
-      }
-
-      // WHERE clause
-      if (this.whereConditions.length > 0) {
-        parts.push(`WHERE ${this.whereConditions.join(' AND ')}`)
-      }
-
-      // GROUP BY clause
-      if (this.groupByColumns.length > 0) {
-        parts.push(`GROUP BY ${this.groupByColumns.join(', ')}`)
-      }
-
-      // HAVING clause
-      if (this.havingConditions.length > 0) {
-        parts.push(`HAVING ${this.havingConditions.join(' AND ')}`)
-      }
-
-      // ORDER BY clause
-      if (this.orderByStatements.length > 0) {
-        const orderByCols = this.orderByStatements.map((stmt) => {
-          const [col, direction] = stmt.split(' ')
-          return `${col} ${direction}`
-        })
-        parts.push(`ORDER BY ${orderByCols.join(', ')}`)
-      }
-
-      // LIMIT
-      if (this.limitValue !== undefined) {
-        if (!Number.isInteger(this.limitValue) || this.limitValue < 0) {
-          throw new Error('LIMIT value must be a non-negative integer')
-        }
-        parts.push(`LIMIT ${this.limitValue}`)
-      }
-
-      // OFFSET
-      if (this.offsetValue !== undefined) {
-        if (!Number.isInteger(this.offsetValue) || this.offsetValue < 0) {
-          throw new Error('OFFSET value must be a non-negative integer')
-        }
-        parts.push(`OFFSET ${this.offsetValue}`)
-      }
-    }
-
-    const finalQuery = parts.join(' ') + ';'
-    return finalQuery
+    return parts.join(' ') + ';'
   }
 }
 
 /**
  * Create a new query builder instance
+ * @template T - Type of the entity being queried
+ * @returns {SelectQueryBuilder<T>} - A new query builder instance
  */
 export function createQueryBuilder<T>(): SelectQueryBuilder<T> {
   return new MySQLQueryBuilder<T>()
