@@ -3,11 +3,11 @@ import { MySQLColumnType } from './column-type.type'
 /**
  * Column definition for table creation
  */
-export type ColumnDefinition = {
+export type ColumnDefinition<TName> = {
   /**
    * Column name
    */
-  name: string
+  name: TName
   /**
    * Column type
    */
@@ -49,7 +49,7 @@ export type ColumnDefinition = {
 /**
  * Create table params
  */
-export type CreateTableParams = {
+export type CreateTableParams<T extends Record<string, unknown>> = {
   /**
    * Table name
    */
@@ -57,5 +57,5 @@ export type CreateTableParams = {
   /**
    * Columns Definition
    */
-  columns: ColumnDefinition[]
+  columns: ColumnDefinition<keyof T>[]
 }

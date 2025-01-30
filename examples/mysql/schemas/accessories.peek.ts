@@ -1,6 +1,13 @@
 import { CreateTableParams } from '../../../lib'
 
-export const accessories: CreateTableParams = {
+export type Accessories = {
+  id: number
+  accessory_name: string
+  accessory_type: string
+  sell_price: number
+}
+
+export const accessories: CreateTableParams<Accessories> = {
   name: 'accessories',
   columns: [
     { name: 'id', type: 'INT', primaryKey: true, autoIncrement: true },

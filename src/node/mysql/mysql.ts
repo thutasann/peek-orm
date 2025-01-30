@@ -83,7 +83,7 @@ export class MySQL {
    * @param params - Create table params
    * @returns {Promise<boolean>} True if table created successfully, false otherwise
    */
-  private async createTable(params: CreateTableParams): Promise<boolean> {
+  private async createTable(params: CreateTableParams<Record<any, any>>): Promise<boolean> {
     const { name, columns } = params
     const columnDefinitions = columns
       .map((column) => {

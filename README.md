@@ -49,12 +49,18 @@ create `schemas` folder in the root directory and create `*.peek.ts` files in th
 ```ts
 import { CreateTableParams } from 'peek-orm'
 
-const accessories: CreateTableParams = {
-  name: 'accessories',
+export type Devices = {
+  id: number
+  name: string
+  device_type: string
+}
+
+export const devices: CreateTableParams<Devices> = {
+  name: 'devices',
   columns: [
     { name: 'id', type: 'INT', primaryKey: true, autoIncrement: true },
-    { name: 'accessory_name', type: 'VARCHAR', length: 255 },
-    { name: 'accessory_type', type: 'VARCHAR', length: 25 },
+    { name: 'name', type: 'VARCHAR', length: 255 },
+    { name: 'device_type', type: 'VARCHAR', length: 25 },
   ],
 }
 ```

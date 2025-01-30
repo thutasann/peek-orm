@@ -4,18 +4,11 @@ import { createQueryBuilder } from './query-builder'
 
 /**
  * Execute a SELECT query on a table
- * @template T - Type of the entity being queried
  * @param table - Name of the table to query
  * @param callback - Function to build the query
  * @returns {Promise<T[]>} Array of query results
- * @example
- * const users = await select<User>('users', (qb) =>
- *   qb.select(['id', 'name'])
- *     .where({ active: true })
- *     .limit(10)
- * );
  */
-export async function select<T>(
+export async function select<T extends Record<string, any>>(
   table: string,
   callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
 ): Promise<T[]> {

@@ -18,8 +18,8 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   /**
    * Specify columns to select
    */
-  select(columns: string | string[]): SelectQueryBuilder<T> {
-    this.selectedColumns = Array.isArray(columns) ? columns : [columns]
+  select(columns: keyof T | Array<keyof T>): SelectQueryBuilder<T> {
+    this.selectedColumns = Array.isArray(columns) ? (columns as string[]) : [columns as string]
     return this
   }
 
