@@ -13,8 +13,73 @@ import { logger } from '../utils/logger'
 export class MySQL {
   private static instance: MySQL
   private isConnected: boolean = false
+  private readonly cacheFolderPath: string = '.peek-cache'
+  private readonly tableCacheFile: string = join(this.cacheFolderPath, 'table-caches.json')
+  private readonly schemaCacheFile: string = join(this.cacheFolderPath, 'schema-caches.json')
 
-  private constructor() {}
+  private constructor() {
+    if (!fs.existsSync(this.cacheFolderPath)) {
+      fs.mkdirSync(this.cacheFolderPath, { recursive: true })
+    }
+  }
+
+  /**
+   * Read cache from file
+   * @returns {Map<string, CreateTableParams<Record<any, any>>>} Cache map
+   */
+  private readCache(): Map<string, CreateTableParams<Record<any, any>>> {
+    try {
+      if (fs.existsSync(this.tableCacheFile)) {
+        const cacheData = JSON.parse(fs.readFileSync(this.tableCacheFile, 'utf-8'))
+        return new Map(Object.entries(cacheData))
+      }
+    } catch (error) {
+      logger.error('Failed to read cache file:', error)
+    }
+    return new Map()
+  }
+
+  /**
+   * Write cache to file
+   * @param cache - Cache map to write
+   */
+  private writeCache(cache: Map<string, CreateTableParams<Record<any, any>>>): void {
+    try {
+      const cacheData = Object.fromEntries(cache)
+      fs.writeFileSync(this.tableCacheFile, JSON.stringify(cacheData, null, 2))
+    } catch (error) {
+      logger.error('Failed to write cache file:', error)
+    }
+  }
+
+  /**
+   * Read schema cache from file
+   * @returns {Map<string, any>} Schema cache map
+   */
+  private readSchemaCache(): Map<string, any> {
+    try {
+      if (fs.existsSync(this.schemaCacheFile)) {
+        const cacheData = JSON.parse(fs.readFileSync(this.schemaCacheFile, 'utf-8'))
+        return new Map(Object.entries(cacheData))
+      }
+    } catch (error) {
+      logger.error('Failed to read schema cache file:', error)
+    }
+    return new Map()
+  }
+
+  /**
+   * Write schema cache to file
+   * @param cache - Schema cache map to write
+   */
+  private writeSchemaCache(cache: Map<string, any>): void {
+    try {
+      const cacheData = Object.fromEntries(cache)
+      fs.writeFileSync(this.schemaCacheFile, JSON.stringify(cacheData, null, 2))
+    } catch (error) {
+      logger.error('Failed to write schema cache file:', error)
+    }
+  }
 
   /**
    * Create a table
@@ -23,6 +88,18 @@ export class MySQL {
    */
   private async createTable(params: CreateTableParams<Record<any, any>>): Promise<boolean> {
     const { name, columns } = params
+    const cache = this.readCache()
+    const cachedTable = cache.get(name)
+
+    if (cachedTable) {
+      const columnsChanged = JSON.stringify(cachedTable.columns) !== JSON.stringify(columns)
+      if (!columnsChanged) {
+        logger.info(`Table ${name} already exists in cache with same schema, skipping creation`)
+        return true
+      }
+      logger.info(`Table ${name} schema has changed, updating...`)
+    }
+
     const columnDefinitions = columns
       .map((column) => {
         let def = `${column.name} ${column.type}`
@@ -56,7 +133,24 @@ export class MySQL {
       .join(', ')
 
     logger.info(`TABLE ${name}`, columnDefinitions)
-    return createTable(name, columnDefinitions)
+    const success = createTable(name, columnDefinitions)
+
+    if (success) {
+      cache.set(name, params)
+      this.writeCache(cache)
+    }
+
+    return success
+  }
+
+  /**
+   * Get cached table schema
+   * @param tableName - Name of the table
+   * @returns {CreateTableParams<Record<any, any>> | undefined} Table schema if exists in cache
+   */
+  public getTableSchema(tableName: string): CreateTableParams<Record<any, any>> | undefined {
+    const cache = this.readCache()
+    return cache.get(tableName)
   }
 
   /**
@@ -66,6 +160,8 @@ export class MySQL {
    */
   private async createTablesFromSchemas(schemaDir: string): Promise<Record<string, boolean>> {
     const results: Record<string, boolean> = {}
+    const schemaCache = this.readSchemaCache()
+    const newSchemaCache = new Map<string, any>()
 
     try {
       const fullPath = resolve(schemaDir)
@@ -84,23 +180,49 @@ export class MySQL {
         return results
       }
 
+      // First, process all files and update cache
       for (const file of schemaFiles) {
+        const filePath = join(fullPath, file)
         try {
-          const schema = require(join(fullPath, file))
+          const stats = fs.statSync(filePath)
+          const cachedSchema = schemaCache.get(filePath)
 
-          for (const key in schema) {
-            const tableSchema = schema[key]
-            if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
-              results[tableSchema.name] = await this.createTable(tableSchema)
-              logger.success(`Table ${tableSchema.name} created successfully\n`)
+          // Process file if it's new or modified
+          if (!cachedSchema || cachedSchema.mtime !== stats.mtime.toISOString()) {
+            delete require.cache[require.resolve(filePath)] // Clear require cache
+            const schema = require(filePath)
+            newSchemaCache.set(filePath, {
+              mtime: stats.mtime.toISOString(),
+              schema,
+            })
+
+            for (const key in schema) {
+              const tableSchema = schema[key]
+              if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
+                results[tableSchema.name] = await this.createTable(tableSchema)
+                logger.success(`Table ${tableSchema.name} created/updated from ${file}\n`)
+              }
+            }
+          } else {
+            // Use cached schema
+            newSchemaCache.set(filePath, cachedSchema)
+            for (const key in cachedSchema.schema) {
+              const tableSchema = cachedSchema.schema[key]
+              if (tableSchema && typeof tableSchema === 'object' && tableSchema.name && tableSchema.columns) {
+                results[tableSchema.name] = await this.createTable(tableSchema)
+                logger.success(`Table ${tableSchema.name} loaded from cache\n`)
+              }
             }
           }
         } catch (error) {
-          logger.error(`Failed to process schema file ${file}`, error)
+          logger.error(`Failed to process schema file ${file}:`, error)
         }
       }
+
+      // Update schema cache with all processed files
+      this.writeSchemaCache(newSchemaCache)
     } catch (error) {
-      logger.error('Failed to read schema directory', error)
+      logger.error('Failed to read schema directory:', error)
     }
 
     return results
@@ -147,6 +269,7 @@ export class MySQL {
    * @returns {Promise<boolean>} True if cleanup successful, false otherwise
    */
   async cleanup(): Promise<boolean> {
+    this.clearTableCache()
     return await cleanupFn()
   }
 
@@ -159,6 +282,25 @@ export class MySQL {
     if (this.isConnected) {
       closeMySQL()
       this.isConnected = false
+    }
+  }
+
+  /**
+   * Clear all caches
+   */
+  clearTableCache(): void {
+    try {
+      if (fs.existsSync(this.tableCacheFile)) {
+        fs.unlinkSync(this.tableCacheFile)
+      }
+      if (fs.existsSync(this.schemaCacheFile)) {
+        fs.unlinkSync(this.schemaCacheFile)
+      }
+      if (fs.existsSync(this.cacheFolderPath) && fs.readdirSync(this.cacheFolderPath).length === 0) {
+        fs.rmdirSync(this.cacheFolderPath)
+      }
+    } catch (error) {
+      logger.error('Failed to clear cache files:', error)
     }
   }
 

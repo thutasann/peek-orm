@@ -16,7 +16,7 @@ async function main() {
         // await insert_multiple_devices()
 
         const all_devices_native = await get_devices_native()
-        console.log('all_devices_native ==> ', all_devices_native)
+        console.log('all_devices_native ==> ', all_devices_native?.length)
       } else {
         console.log('Failed to connect to MySQL')
       }

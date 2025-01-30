@@ -92,3 +92,6 @@ next-env.d.ts
 
 # mysql
 config.json
+
+# peeks
+.peek-cache/
