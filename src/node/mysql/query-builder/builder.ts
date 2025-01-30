@@ -3,6 +3,9 @@ import { BuildQueryHelper } from './build-query-helper'
 
 /**
  * MySQL Query Builder Implementation
+ * @description This is the internal query builder class
+ * @version 0.0.1
+ * @author [thutasann](https://github.com/thutasann)
  * @template T - Type of the entity being queried
  */
 export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {

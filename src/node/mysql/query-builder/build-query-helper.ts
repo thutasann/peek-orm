@@ -2,6 +2,9 @@ import { MySQLQueryBuilder } from './builder'
 
 /**
  * ## Build Query Helper
+ * - This is the internal query builder class for the MySQL client
+ * @version 0.0.1
+ * @author [thutasann](https://github.com/thutasann)
  */
 export class BuildQueryHelper {
   static buildInsertQuery(tableName: string, insertedValues: { columns: string[]; values: any[][] }): string {

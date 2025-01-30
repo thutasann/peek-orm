@@ -10,6 +10,9 @@ const COLORS = {
 
 /**
  * Logger Utility
+ * @description This is the logger utility class
+ * @version 0.0.1
+ * @author [thutasann](https://github.com/thutasann)
  */
 export const logger = {
   /**

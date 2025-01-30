@@ -5,7 +5,9 @@ import { logger } from '../utils/logger'
 /**
  * ## Cache Manager
  * - Read and write table and schema caches to file
- * @description Cache manager for MySQL
+ * - This is the internal cache manager class for the MySQL client
+ * @version 0.0.1
+ * @author [thutasann](https://github.com/thutasann)
  */
 export class CacheManager {
   private readonly cacheFolderPath: string = '.peek-cache'

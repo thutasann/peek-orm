@@ -7,8 +7,8 @@ import { CacheManager } from './cache-manager'
 
 /**
  * MySQL Client
- * - Connect to MySQL database
- * @description Singleton MySQL client instance
+ * @description This is the MySQL client class that connects to the database and creates tables from `.peek.ts` schema files
+ * @version 0.0.1
  * @author [thutasann](https://github.com/thutasann)
  */
 export class MySQL {
