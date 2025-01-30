@@ -14,6 +14,7 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   private orderByStatements: string[] = []
   private limitValue?: number
   private offsetValue?: number
+  private nativeQuery?: string
 
   select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
     if (columns === '*') {
@@ -21,6 +22,11 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     } else {
       this.selectedColumns = Array.isArray(columns) ? columns : [columns]
     }
+    return this
+  }
+
+  native(query: string): SelectQueryBuilder<T> {
+    this.nativeQuery = query
     return this
   }
 
@@ -116,6 +122,10 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   }
 
   getQuery(): string {
+    if (this.nativeQuery) {
+      return this.nativeQuery
+    }
+
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
 
     const parts: string[] = []

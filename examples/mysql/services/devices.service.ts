@@ -19,3 +19,12 @@ export async function get_device_by_id(id: number): Promise<Devices> {
   const data = await selectOne<Devices>('devices', (qb) => qb.select('*').where({ id }))
   return data
 }
+
+/**
+ * Get all devices using a native query
+ * @returns {Promise<Devices[]>} Array of devices
+ */
+export async function get_device_by_id_native(): Promise<Devices[]> {
+  const data = await select<Devices>('devices', (qb) => qb.native(`SELECT * FROM devices`))
+  return data
+}

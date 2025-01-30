@@ -17,6 +17,14 @@ export interface SelectQueryBuilder<T = any> {
   select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T>
 
   /**
+   * Specifies the native query to execute
+   * @param query - The native query string
+   * @example
+   * .native('SELECT * FROM users')
+   */
+  native(query: string): SelectQueryBuilder<T>
+
+  /**
    * Specifies the table to select from
    * @param table - Name of the table
    * @example
