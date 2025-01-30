@@ -1,6 +1,6 @@
 import { MySQL } from '../../lib'
 import { connectParams } from './configs/db'
-import { get_devices_native } from './services/devices.service'
+import { get_devices_native, insert_device } from './services/devices.service'
 
 async function main() {
   MySQL.client()
@@ -12,7 +12,7 @@ async function main() {
         // const device_by_id = await get_device_by_id(1)
         // console.log('device_by_id ==>', device_by_id)
 
-        // await insert_device()
+        await insert_device()
         // await insert_multiple_devices()
 
         const all_devices_native = await get_devices_native()

@@ -20,6 +20,7 @@ export async function insert_device(): Promise<void> {
   const response = await peek.insert<Devices>('devices', {
     name: 'device 14',
     device_type: 'car',
+    sell_price: 1000,
   })
   console.log('response ==> ', response)
 }
