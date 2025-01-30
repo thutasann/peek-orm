@@ -1,5 +1,6 @@
 #include "../include/mysql_helper.h"
 
+#include <ctype.h>
 #include <mysql.h>
 #include <node_api.h>
 #include <stdio.h>
@@ -140,4 +141,82 @@ napi_value CreateTable(napi_env env, napi_callback_info info) {
     napi_value result_value;
     napi_get_boolean(env, 1, &result_value);
     return result_value;
+}
+
+/** Function to Select Data from MySQL */
+napi_value Select(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2], result;
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    char table[256], query_string[1024] = "";
+    napi_get_value_string_utf8(env, args[0], table, sizeof(table), NULL);
+    napi_get_value_string_utf8(env, args[1], query_string, sizeof(query_string), NULL);
+
+    // Parse the query string to extract columns if specified
+    char columns[512] = "*"; // Default to all columns
+    char conditions[512] = "";
+    char limit[64] = "";
+
+    if (strlen(query_string) > 0) {
+        char *select_str = strstr(query_string, "SELECT ");
+        if (select_str) {
+            sscanf(select_str + 7, "%511[^WHERE]", columns);
+            // Remove trailing spaces
+            char *end = columns + strlen(columns) - 1;
+            while (end > columns && isspace(*end))
+                *end-- = '\0';
+        }
+
+        char *where_str = strstr(query_string, "WHERE ");
+        if (where_str) {
+            sscanf(where_str + 6, "%511[^LIMIT]", conditions);
+            // Remove trailing spaces
+            char *end = conditions + strlen(conditions) - 1;
+            while (end > conditions && isspace(*end))
+                *end-- = '\0';
+        }
+
+        char *limit_str = strstr(query_string, "LIMIT ");
+        if (limit_str) {
+            sscanf(limit_str + 6, "%63s", limit);
+        }
+    }
+
+    // Construct the final query
+    char query[2048];
+    snprintf(query, sizeof(query), "SELECT %s FROM %s%s%s%s%s",
+             columns,
+             table,
+             strlen(conditions) > 0 ? " WHERE " : "",
+             conditions,
+             strlen(limit) > 0 ? " LIMIT " : "",
+             limit);
+
+    MYSQL_RES *res;
+    if (mysql_query(conn, query) == 0) {
+        res = mysql_store_result(conn);
+        int num_fields = mysql_num_fields(res);
+        MYSQL_ROW row;
+        napi_value array;
+        napi_create_array(env, &array);
+        int index = 0;
+
+        while ((row = mysql_fetch_row(res))) {
+            napi_value obj;
+            napi_create_object(env, &obj);
+            for (int i = 0; i < num_fields; i++) {
+                napi_value value;
+                napi_create_string_utf8(env, row[i] ? row[i] : "NULL", NAPI_AUTO_LENGTH, &value);
+                MYSQL_FIELD *field = mysql_fetch_field_direct(res, i);
+                napi_set_named_property(env, obj, field->name, value);
+            }
+            napi_set_element(env, array, index++, obj);
+        }
+        mysql_free_result(res);
+        return array;
+    }
+
+    napi_get_undefined(env, &result);
+    return result;
 }
