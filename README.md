@@ -68,10 +68,10 @@ export const devices: CreateTableParams<Devices> = {
 ## Basic Query
 
 ```ts
-import { select } from 'peek-orm'
+import { peek } from 'peek-orm'
 
 async function get_devices() {
-  const data = await select<Devices>('devices', (qb) => qb.select('*').where({ name: 'device 1' }))
+  const data = await peek.select<Devices>('devices', (qb) => qb.select('*').where({ name: 'device 1' }))
   return data
 }
 
@@ -82,20 +82,22 @@ const devices = await get_devices() // [ { name: 'device 1', device_type: 'lapto
 
 ```ts
 // select name and device_type where name is 'device 1' or device_type is 'laptop'
-const query_1 = await select<Devices>('devices', (qb) =>
+const query_1 = await peek.select<Devices>('devices', (qb) =>
   qb.select(['name', 'device_type']).where({ name: 'device 1' }).orWhere({ device_type: 'laptop' }),
 )
 
 // select name and device_type where name is 'device 1' and device_type is 'laptop'
-const query_2 = await select<Devices>('devices', (qb) =>
+const query_2 = await peek.select<Devices>('devices', (qb) =>
   qb.select(['name', 'device_type']).where({ name: 'device 1' }).andWhere({ device_type: 'laptop', name: 'device 2' }),
 )
 
 // select all columns where offset is 1 and limit is 2
-const query_3 = await select<Devices>('devices', (qb) => qb.select('*').offset(1).limit(2))
+const query_3 = await peek.select<Devices>('devices', (qb) => qb.select('*').offset(1).limit(2))
 
 // select all columns where id is greater than 1 and name is 'device 2'
-const query_4 = await select<Devices>('devices', (qb) => qb.select('*').where('id > 1').where({ name: 'device 2' }))
+const query_4 = await peek.select<Devices>('devices', (qb) =>
+  qb.select('*').where('id > 1').where({ name: 'device 2' }),
+)
 ```
 
 ---

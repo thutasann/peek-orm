@@ -11,72 +11,10 @@ import { logger } from '../utils/logger'
  * @author [thutasann](https://github.com/thutasann)
  */
 export class MySQL {
-  /**
-   * MySQL client instance
-   */
   private static instance: MySQL
-
-  /**
-   * Is connected to MySQL database
-   */
   private isConnected: boolean = false
 
   private constructor() {}
-
-  /**
-   * Get MySQL client instance
-   * @description Singleton MySQL client instance
-   * @returns {MySQL} MySQL client instance
-   */
-  static client(): MySQL {
-    if (!MySQL.instance) {
-      MySQL.instance = new MySQL()
-    }
-    return MySQL.instance
-  }
-
-  /**
-   * ## Connect Method
-   * - Connect to MySQL database
-   * - Create tables from .peek.js schema files
-   * @param config - Connect params
-   * @param schemasDir - Directory containing .peek.js schema files
-   * @returns {Promise<MySQL>} - MySQL client instance
-   */
-  async connect(config: ConnectParams, schemasDir: string): Promise<MySQL> {
-    const { host, user, password, database } = config
-    this.isConnected = await connectMySQL(host, user, password, database)
-
-    if (this.isConnected) {
-      logger.success('Connected to MySQL database\n')
-      await this.createTablesFromSchemas(schemasDir)
-    } else {
-      logger.error('Failed to connect to MySQL database')
-      throw new Error('Failed to connect to MySQL database')
-    }
-
-    return this
-  }
-
-  /**
-   * ## Disconnect Method
-   * - Close MySQL connection
-   * @returns {Promise<void>} Promise that resolves when the connection is closed
-   */
-  async disconnect(): Promise<void> {
-    if (this.isConnected) {
-      closeMySQL()
-      this.isConnected = false
-    }
-  }
-
-  /**
-   * ## Check if connected to database
-   * @returns {boolean} True if connected to database, false otherwise
-   */
-  get connected(): boolean {
-    return this.isConnected
-  }
 
   /**
    * Create a table
@@ -166,5 +104,60 @@ export class MySQL {
     }
 
     return results
+  }
+
+  /**
+   * Get MySQL client instance
+   * @description Singleton MySQL client instance
+   * @returns {MySQL} MySQL client instance
+   */
+  static client(): MySQL {
+    if (!MySQL.instance) {
+      MySQL.instance = new MySQL()
+    }
+    return MySQL.instance
+  }
+
+  /**
+   * ## Connect Method
+   * - Connect to MySQL database
+   * - Create tables from .peek.js schema files
+   * @param config - Connect params
+   * @param schemasDir - Directory containing .peek.js schema files
+   * @returns {Promise<MySQL>} - MySQL client instance
+   */
+  async connect(config: ConnectParams, schemasDir: string): Promise<MySQL> {
+    const { host, user, password, database } = config
+    this.isConnected = await connectMySQL(host, user, password, database)
+
+    if (this.isConnected) {
+      logger.success('Connected to MySQL database\n')
+      await this.createTablesFromSchemas(schemasDir)
+    } else {
+      logger.error('Failed to connect to MySQL database')
+      throw new Error('Failed to connect to MySQL database')
+    }
+
+    return this
+  }
+
+  /**
+   * ## Disconnect Method
+   * - Close MySQL connection
+   * @returns {Promise<void>} Promise that resolves when the connection is closed
+   */
+  async disconnect(): Promise<void> {
+    if (this.isConnected) {
+      closeMySQL()
+      this.isConnected = false
+    }
+  }
+
+  /**
+   * ## Check if connected to database
+   * @returns {boolean} True if connected to database, false otherwise
+   */
+  get connected(): boolean {
+    return this.isConnected
   }
 }
