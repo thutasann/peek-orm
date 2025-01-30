@@ -11,7 +11,7 @@
     "build:gyp": "node-gyp rebuild",
     "build": "npm run build:gyp && npm run build:node",
     "prebuild": "tsc --declaration --emitDeclarationOnly",
-    "example": "cd examples/mysql && node index",
+    "example": "cd examples/mysql && ts-node index",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },

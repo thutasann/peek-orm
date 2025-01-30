@@ -33,7 +33,12 @@ const connectParams: ConnectParams = {
 }
 
 async function main() {
-  await MySQL.client().connect(connectParams, './schemas')
+  const mysql = await MySQL.client().connect(connectParams, './schemas')
+  if (mysql.connected) {
+    console.log('Connected to MySQL')
+  } else {
+    console.log('Failed to connect to MySQL')
+  }
 }
 ```
 
@@ -43,6 +48,7 @@ create `schemas` folder in the root directory and create `*.peek.ts` files in th
 
 ```ts
 import { CreateTableParams } from 'peek-orm'
+
 const accessories: CreateTableParams = {
   name: 'accessories',
   columns: [
@@ -51,6 +57,14 @@ const accessories: CreateTableParams = {
     { name: 'accessory_type', type: 'VARCHAR', length: 25 },
   ],
 }
+```
+
+## Query
+
+```ts
+import { select } from 'peek-orm'
+
+const customers = await select('customers', (qb) => qb.select(['customer_id', 'first_name', 'email']))
 ```
 
 ---

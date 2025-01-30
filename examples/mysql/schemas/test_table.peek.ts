@@ -1,10 +1,6 @@
-// @ts-check
+import { CreateTableParams } from '../../../lib'
 
-/**
- * Test Schema
- * @type {import('../../../lib').CreateTableParams}
- */
-const test_table = {
+export const test_table: CreateTableParams = {
   name: 'test_table',
   columns: [
     { name: 'id', type: 'INT', primaryKey: true, autoIncrement: true },
@@ -15,8 +11,4 @@ const test_table = {
     { name: 'city', type: 'VARCHAR', length: 255 },
     { name: 'state', type: 'VARCHAR', length: 25 },
   ],
-}
-
-module.exports = {
-  test_table,
 }

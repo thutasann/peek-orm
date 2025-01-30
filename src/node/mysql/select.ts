@@ -22,6 +22,5 @@ export async function select<T>(
   const queryBuilder = createQueryBuilder<T>()
   const query = callback(queryBuilder)
   const finalQuery = query.getQuery()
-  console.log('finalQuery', finalQuery)
   return selectQuery(table, finalQuery) as unknown as T[]
 }
