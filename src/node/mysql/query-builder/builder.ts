@@ -1,5 +1,5 @@
-import { SelectQueryBuilder } from '../types'
-import { logger } from '../utils/logger'
+import { SelectQueryBuilder } from '../../types'
+import { logger } from '../../utils/logger'
 
 /**
  * MySQL Query Builder Implementation

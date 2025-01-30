@@ -1,20 +1,21 @@
-import { MySQL, select } from '../../lib'
+import { MySQL } from '../../lib'
 import { connectParams } from './configs/db'
-import { Devices } from './schemas/devices.peek'
-
-async function get_devices() {
-  const data = await select<Devices>('devices', (qb) => qb.select('*'))
-  return data
-}
+import { get_device_by_id, get_devices } from './services/devices.service'
 
 async function main() {
-  const mysql = await MySQL.client().connect(connectParams, './schemas')
-  if (mysql.connected) {
-    const devices = await get_devices()
-    console.log('devices', devices)
-  } else {
-    console.log('Failed to connect to MySQL')
-  }
+  MySQL.client()
+    .connect(connectParams, './schemas')
+    .then(async (status) => {
+      if (status.connected) {
+        const all_devices = await get_devices()
+        const device_by_id = await get_device_by_id(1)
+
+        console.log('all_devices', all_devices)
+        console.log('device_by_id', device_by_id)
+      } else {
+        console.log('Failed to connect to MySQL')
+      }
+    })
 }
 
 main()
