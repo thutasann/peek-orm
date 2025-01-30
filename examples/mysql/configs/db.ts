@@ -7,4 +7,5 @@ export const connectParams: ConnectParams = {
   user: config.mysql.user,
   password: config.mysql.password,
   database: config.mysql.database,
+  port: config.mysql.port || 3306,
 }

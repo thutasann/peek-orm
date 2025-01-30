@@ -1,6 +1,6 @@
 import fs, { readdirSync } from 'fs'
 import { join, resolve } from 'path'
-import { closeMySQL, connectMySQL, createTable } from '../../build/Release/peek-orm.node'
+import { cleanup as cleanupFn, closeMySQL, createTable, initialize } from '../../build/Release/peek-orm.node'
 import { ConnectParams, CreateTableParams } from '../types/mysql-types'
 import { logger } from '../utils/logger'
 
@@ -128,7 +128,7 @@ export class MySQL {
    */
   async connect(config: ConnectParams, schemasDir: string): Promise<MySQL> {
     const { host, user, password, database } = config
-    this.isConnected = await connectMySQL(host, user, password, database)
+    this.isConnected = await initialize(host, user, password, database, 3306)
 
     if (this.isConnected) {
       logger.success('Connected to MySQL database\n')
@@ -139,6 +139,15 @@ export class MySQL {
     }
 
     return this
+  }
+
+  /**
+   * ## Cleanup Method
+   * - Cleanup MySQL connection
+   * @returns {Promise<boolean>} True if cleanup successful, false otherwise
+   */
+  async cleanup(): Promise<boolean> {
+    return await cleanupFn()
   }
 
   /**

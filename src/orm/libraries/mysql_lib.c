@@ -1,5 +1,5 @@
 #include "../include/mysql_helper.h"
-
+#include "../include/mysql_pool.h"
 #include <ctype.h>
 #include <mysql.h>
 #include <node_api.h>
@@ -7,7 +7,65 @@
 #include <stdlib.h>
 #include <string.h>
 
-MYSQL *conn;
+static ConnectionPool *pool = NULL;
+static MYSQL *conn = NULL;
+
+/** Initialize the connection pool */
+napi_value Initialize(napi_env env, napi_callback_info info) {
+    size_t argc = 5;
+    napi_value args[5];
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    if (argc < 5) {
+        napi_throw_error(env, NULL, "Wrong number of arguments");
+        return NULL;
+    }
+
+    char host[256], user[256], password[256], database[256];
+    int port;
+
+    napi_get_value_string_utf8(env, args[0], host, sizeof(host), NULL);
+    napi_get_value_string_utf8(env, args[1], user, sizeof(user), NULL);
+    napi_get_value_string_utf8(env, args[2], password, sizeof(password), NULL);
+    napi_get_value_string_utf8(env, args[3], database, sizeof(database), NULL);
+    napi_get_value_int32(env, args[4], &port);
+
+    if (conn != NULL) {
+        mysql_close(conn);
+    }
+
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, host, user, password, database, port, NULL, 0)) {
+        napi_throw_error(env, NULL, mysql_error(conn));
+        return NULL;
+    }
+
+    if (pool != NULL) {
+        pool_destroy(pool);
+    }
+
+    pool = pool_create(host, user, password, database, port);
+    if (!pool) {
+        napi_throw_error(env, NULL, "Failed to create connection pool");
+        return NULL;
+    }
+
+    napi_value result;
+    napi_get_boolean(env, true, &result);
+    return result;
+}
+
+/** Add cleanup function */
+napi_value Cleanup(napi_env env, napi_callback_info info) {
+    if (pool) {
+        pool_destroy(pool);
+        pool = NULL;
+    }
+
+    napi_value result;
+    napi_get_boolean(env, true, &result);
+    return result;
+}
 
 /** Function to Connect to MySQL with Parameters */
 napi_value ConnectMySQL(napi_env env, napi_callback_info info) {
@@ -157,6 +215,18 @@ napi_value Select(napi_env env, napi_callback_info info) {
     char query[2048];
     napi_get_value_string_utf8(env, args[0], query, sizeof(query), NULL);
 
+    if (!pool) {
+        napi_throw_error(env, NULL, "Database not initialized");
+        return NULL;
+    }
+
+    // Get a connection from the pool
+    MYSQL *conn = pool_get_connection(pool);
+    if (!conn) {
+        napi_throw_error(env, NULL, "Could not get database connection from pool");
+        return NULL;
+    }
+
     MYSQL_RES *res;
     if (mysql_query(conn, query) == 0) {
         res = mysql_store_result(conn);
@@ -178,10 +248,16 @@ napi_value Select(napi_env env, napi_callback_info info) {
             napi_set_element(env, array, index++, obj);
         }
         mysql_free_result(res);
+
+        pool_return_connection(pool, conn);
+
         return array;
     }
 
     napi_throw_error(env, NULL, mysql_error(conn));
     napi_get_undefined(env, &result);
+
+    pool_return_connection(pool, conn);
+
     return result;
 }

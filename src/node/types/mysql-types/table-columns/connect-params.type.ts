@@ -18,4 +18,8 @@ export type ConnectParams = {
    * MySQL database
    */
   database: string
+  /**
+   * MySQL port
+   */
+  port: number
 }

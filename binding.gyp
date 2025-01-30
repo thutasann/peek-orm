@@ -5,7 +5,8 @@
       "sources": [
         "src/orm/index.c",
         "src/orm/mysql_functions.c",
-        "src/orm/libraries/mysql_lib.c"
+        "src/orm/libraries/mysql_lib.c",
+        "src/orm/libraries/mysql_pool.c"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
