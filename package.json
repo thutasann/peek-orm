@@ -1,6 +1,6 @@
 {
   "name": "peek-orm",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A Node.js ORM package using native C.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

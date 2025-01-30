@@ -4,8 +4,8 @@ import { createQueryBuilder } from './query-builder'
 
 /**
  * ## Peek ORM
- * @description
- * Peek ORM is a fast, simple and easy to use ORM for MySQL built on top of the MySQL C API
+ * @description Peek ORM is a high-performance Node.js ORM (Object-Relational Mapping) package that leverages native C bindings for optimal speed and efficiency. It provides a seamless bridge between your Node.js application and relational databases, offering native-level performance while maintaining the ease of use of JavaScript.Peek ORM is a fast, simple and easy to use ORM for MySQL built on top of the MySQL C API
+ * @version 0.0.1
  * @author [thutasann](https://github.com/thutasann)
  */
 export class peek {
