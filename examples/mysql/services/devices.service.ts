@@ -6,7 +6,7 @@ import { Devices } from '../schemas/devices.peek'
  * @returns {Promise<Devices[]>} Array of devices
  */
 export async function get_devices(): Promise<Devices[]> {
-  const data = await select<Devices>('devices', (qb) => qb.select('*'))
+  const data = await select<Devices>('devices', (qb) => qb.select('*').where('id > 1').where({ name: 'device 2' }))
   return data
 }
 
