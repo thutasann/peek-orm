@@ -30,6 +30,7 @@ const connectParams: ConnectParams = {
   user: 'root',
   password: 'password',
   database: 'test',
+  port: 3306,
 }
 
 async function main() {
@@ -65,22 +66,10 @@ export const devices: CreateTableParams<Devices> = {
 }
 ```
 
-## Basic Query
-
-```ts
-import { peek } from 'peek-orm'
-
-async function get_devices() {
-  const data = await peek.select<Devices>('devices', (qb) => qb.select('*').where({ name: 'device 1' }))
-  return data
-}
-
-const devices = await get_devices() // [ { name: 'device 1', device_type: 'laptop' } ]
-```
-
 ### Queries Samples
 
-- [Queries Samples](./docs/queries-samples.md)
+- [Select Queries](./docs/queries-samples.md#select-queries)
+- [Insert Queries](./docs/queries-samples.md#insert-queries)
 
 ---
 

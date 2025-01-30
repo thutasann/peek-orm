@@ -1,5 +1,8 @@
 # Queries Samples
 
+In this section, we will show you how to use </br>
+the `peek.select`, `peek.insert`, `peek.update`, and `peek.delete` methods.
+
 ## Select Queries
 
 ```ts
@@ -16,6 +19,8 @@ const query_3 = await peek.select<Devices>('devices', (qb) => qb.select('*').off
 const query_4 = await peek.select<Devices>('devices', (qb) =>
   qb.select('*').where('id > 1').where({ name: 'device 2' }),
 )
+
+const query_5 = await peek.select<Devices>('devices', (qb) => qb.native(`SELECT * FROM devices`))
 ```
 
 ## Insert Queries
@@ -39,6 +44,6 @@ const response_2 = await peek.insert<Devices>('devices', [
   },
 ])
 
-console.log('response_1 ==> ', response_1) // { result: { affectedRows: 1, insertId: 10 }, values: { name: 'device 9', device_type: 'car' } }
-console.log('response_2 ==> ', response_2) // { result: { affectedRows: 2, insertId: 10 }, values: [ { name: 'device 9', device_type: 'car' }, { name: 'device 10', device_type: 'car' } ] }
+console.log('response_1 ==> ', response_1) // { result: { affectedRows: 1, insertId: 10 }, values: ... }
+console.log('response_2 ==> ', response_2) // { result: { affectedRows: 2, insertId: 10 }, values: ... }
 ```
