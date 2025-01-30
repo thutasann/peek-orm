@@ -1,4 +1,5 @@
 import { SelectQueryBuilder } from '../types'
+import { logger } from '../utils/logger'
 
 /**
  * MySQL Query Builder Implementation
@@ -15,9 +16,6 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   private limitValue?: number
   private offsetValue?: number
 
-  /**
-   * Specify columns to select
-   */
   select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
     if (columns === '*') {
       this.selectedColumns = ['*']
@@ -27,17 +25,11 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  /**
-   * Specify the table to query from
-   */
   from(table: string): SelectQueryBuilder<T> {
     this.tableName = table
     return this
   }
 
-  /**
-   * Add WHERE condition
-   */
   where(condition: string | object): SelectQueryBuilder<T> {
     if (typeof condition === 'string') {
       this.whereConditions.push(condition)
@@ -50,16 +42,10 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  /**
-   * Add AND WHERE condition
-   */
   andWhere(condition: string | object): SelectQueryBuilder<T> {
     return this.where(condition)
   }
 
-  /**
-   * Add OR WHERE condition
-   */
   orWhere(condition: string | object): SelectQueryBuilder<T> {
     if (this.whereConditions.length === 0) {
       return this.where(condition)
@@ -78,49 +64,31 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  /**
-   * Add JOIN clause
-   */
   join(table: string, condition: string): SelectQueryBuilder<T> {
     this.joinClauses.push(`JOIN ${table} ON ${condition}`)
     return this
   }
 
-  /**
-   * Add LEFT JOIN clause
-   */
   leftJoin(table: string, condition: string): SelectQueryBuilder<T> {
     this.joinClauses.push(`LEFT JOIN ${table} ON ${condition}`)
     return this
   }
 
-  /**
-   * Add RIGHT JOIN clause
-   */
   rightJoin(table: string, condition: string): SelectQueryBuilder<T> {
     this.joinClauses.push(`RIGHT JOIN ${table} ON ${condition}`)
     return this
   }
 
-  /**
-   * Add INNER JOIN clause
-   */
   innerJoin(table: string, condition: string): SelectQueryBuilder<T> {
     this.joinClauses.push(`INNER JOIN ${table} ON ${condition}`)
     return this
   }
 
-  /**
-   * Add GROUP BY clause
-   */
   groupBy(columns: string | string[]): SelectQueryBuilder<T> {
     this.groupByColumns = Array.isArray(columns) ? columns : [columns]
     return this
   }
 
-  /**
-   * Add HAVING clause
-   */
   having(condition: string | object): SelectQueryBuilder<T> {
     if (typeof condition === 'string') {
       this.havingConditions.push(condition)
@@ -133,38 +101,31 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  /**
-   * Add ORDER BY clause
-   */
   orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): SelectQueryBuilder<T> {
     this.orderByStatements.push(`${column} ${direction}`)
     return this
   }
 
-  /**
-   * Add LIMIT clause
-   */
   limit(limit: number): SelectQueryBuilder<T> {
     this.limitValue = limit
     return this
   }
 
-  /**
-   * Add OFFSET clause
-   */
   offset(offset: number): SelectQueryBuilder<T> {
     this.offsetValue = offset
     return this
   }
 
-  /**
-   * Get the final SQL query string
-   */
   getQuery(): string {
+    if (!this.tableName) throw new Error('Table name must be specified using from() method')
+
     const parts: string[] = []
 
     // SELECT clause
-    parts.push(`SELECT ${this.selectedColumns.join(', ')}`)
+    const columns = this.selectedColumns.map((col) => {
+      return col === '*' ? col : col.toString()
+    })
+    parts.push(`SELECT ${columns.join(', ')}`)
 
     // FROM clause
     parts.push(`FROM ${this.tableName}`)
@@ -191,19 +152,30 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
 
     // ORDER BY clause
     if (this.orderByStatements.length > 0) {
-      parts.push(`ORDER BY ${this.orderByStatements.join(', ')}`)
+      const orderByCols = this.orderByStatements.map((stmt) => {
+        const [col, direction] = stmt.split(' ')
+        return `${col} ${direction}`
+      })
+      parts.push(`ORDER BY ${orderByCols.join(', ')}`)
     }
 
     // LIMIT and OFFSET
     if (this.limitValue !== undefined) {
+      if (!Number.isInteger(this.limitValue) || this.limitValue < 0) {
+        throw new Error('LIMIT value must be a non-negative integer')
+      }
       parts.push(`LIMIT ${this.limitValue}`)
     }
+
     if (this.offsetValue !== undefined) {
+      if (!Number.isInteger(this.offsetValue) || this.offsetValue < 0) {
+        throw new Error('OFFSET value must be a non-negative integer')
+      }
       parts.push(`OFFSET ${this.offsetValue}`)
     }
 
-    const finalQuery = parts.join(' ')
-    console.log('SELECT query ==>', finalQuery)
+    const finalQuery = parts.join(' ') + ';'
+    logger.info('SELECT QUERY: ', finalQuery)
 
     return finalQuery
   }

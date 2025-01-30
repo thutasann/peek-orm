@@ -13,7 +13,8 @@ export async function select<T extends Record<string, any>>(
   callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
 ): Promise<T[]> {
   const queryBuilder = createQueryBuilder<T>()
+  queryBuilder.from(table)
   const query = callback(queryBuilder)
   const finalQuery = query.getQuery()
-  return selectQuery(table, finalQuery) as unknown as T[]
+  return selectQuery(finalQuery) as unknown as T[]
 }

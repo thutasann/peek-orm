@@ -18,7 +18,7 @@ export const logger = {
    * @param details - Optional details to log
    */
   info: (message: string, details?: any) => {
-    console.log(`${COLORS.blue} [INFO]:${COLORS.reset} ${message}`)
+    console.log(`${COLORS.blue}[INFO]:${COLORS.reset} ${message}`)
     if (details) console.log(`${COLORS.gray}${JSON.stringify(details, null, 2)}${COLORS.reset}`)
   },
 
@@ -28,7 +28,7 @@ export const logger = {
    * @param details - Optional details to log
    */
   success: (message: string, details?: any) => {
-    console.log(`${COLORS.green} [SUCCESS]:${COLORS.reset} ${message}`)
+    console.log(`${COLORS.green}[SUCCESS]:${COLORS.reset} ${message}`)
     if (details) console.log(`${COLORS.gray}${JSON.stringify(details, null, 2)}${COLORS.reset}`)
   },
 
@@ -38,7 +38,7 @@ export const logger = {
    * @param details - Optional details to log
    */
   warning: (message: string, details?: any) => {
-    console.log(`${COLORS.yellow}  [WARNING]:${COLORS.reset} ${message}`)
+    console.log(`${COLORS.yellow}[WARNING]:${COLORS.reset} ${message}`)
     if (details) console.log(`${COLORS.gray}${JSON.stringify(details, null, 2)}${COLORS.reset}`)
   },
 
@@ -48,7 +48,7 @@ export const logger = {
    * @param details - Optional details to log
    */
   error: (message: string, details?: any) => {
-    console.log(`${COLORS.red} [ERROR]:${COLORS.reset} ${message}`)
+    console.log(`${COLORS.red}[ERROR]:${COLORS.reset} ${message}`)
     if (details) console.log(`${COLORS.gray}${JSON.stringify(details, null, 2)}${COLORS.reset}`)
   },
 }
