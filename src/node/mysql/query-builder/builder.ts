@@ -1,5 +1,4 @@
 import { SelectQueryBuilder } from '../../types'
-import { logger } from '../../utils/logger'
 
 /**
  * MySQL Query Builder Implementation
@@ -175,8 +174,6 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     }
 
     const finalQuery = parts.join(' ') + ';'
-    logger.info('SELECT QUERY: ', finalQuery)
-
     return finalQuery
   }
 

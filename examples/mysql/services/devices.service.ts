@@ -1,12 +1,21 @@
-import { select } from '../../../lib'
+import { select, selectOne } from '../../../lib'
 import { Devices } from '../schemas/devices.peek'
 
-export async function get_devices() {
+/**
+ * Get all devices
+ * @returns {Promise<Devices[]>} Array of devices
+ */
+export async function get_devices(): Promise<Devices[]> {
   const data = await select<Devices>('devices', (qb) => qb.select('*'))
   return data
 }
 
-export async function get_device_by_id(id: number) {
-  const data = await select<Devices>('devices', (qb) => qb.select('*').where({ id }))
+/**
+ * Get device by id
+ * @param id - Device id
+ * @returns {Promise<Devices>} Device
+ */
+export async function get_device_by_id(id: number): Promise<Devices> {
+  const data = await selectOne<Devices>('devices', (qb) => qb.select('*').where({ id }))
   return data
 }

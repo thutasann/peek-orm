@@ -7,10 +7,12 @@ async function main() {
     .connect(connectParams, './schemas')
     .then(async (status) => {
       if (status.connected) {
+        /** get all devices */
         const all_devices = await get_devices()
-        const device_by_id = await get_device_by_id(1)
-
         console.log('all_devices', all_devices)
+
+        /** get device by id */
+        const device_by_id = await get_device_by_id(1)
         console.log('device_by_id', device_by_id)
       } else {
         console.log('Failed to connect to MySQL')
