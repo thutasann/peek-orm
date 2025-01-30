@@ -4,7 +4,7 @@ import { SelectQueryBuilder } from '../types'
  * MySQL Query Builder Implementation
  * @template T - Type of the entity being queried
  */
-export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
+class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   private selectedColumns: Array<keyof T | '*'> = ['*']
   private tableName: string = ''
   private whereConditions: string[] = []
@@ -61,13 +61,19 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
    * Add OR WHERE condition
    */
   orWhere(condition: string | object): SelectQueryBuilder<T> {
+    if (this.whereConditions.length === 0) {
+      return this.where(condition)
+    }
+
     if (typeof condition === 'string') {
-      this.whereConditions.push(`OR ${condition}`)
+      this.whereConditions[this.whereConditions.length - 1] += ` OR ${condition}`
     } else {
-      const conditions = Object.entries(condition).map(([key, value]) => {
-        return `OR ${key} = ${typeof value === 'string' ? `'${value}'` : value}`
-      })
-      this.whereConditions.push(...conditions)
+      const conditions = Object.entries(condition)
+        .map(([key, value]) => {
+          return `${key} = ${typeof value === 'string' ? `'${value}'` : value}`
+        })
+        .join(' OR ')
+      this.whereConditions[this.whereConditions.length - 1] += ` OR ${conditions}`
     }
     return this
   }

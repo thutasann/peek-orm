@@ -65,7 +65,7 @@ export const devices: CreateTableParams<Devices> = {
 }
 ```
 
-## Query
+## Basic Query
 
 ```ts
 import { select } from 'peek-orm'
@@ -76,6 +76,18 @@ async function get_devices() {
 }
 
 const devices = await get_devices() // [ { name: 'device 1', device_type: 'laptop' } ]
+```
+
+### Queries Samples
+
+```ts
+const query_1 = await select<Devices>('devices', (qb) =>
+  qb.select(['name', 'device_type']).where({ name: 'device 1' }).orWhere({ device_type: 'laptop' }),
+)
+
+const query_2 = await select<Devices>('devices', (qb) =>
+  qb.select(['name', 'device_type']).where({ name: 'device 1' }).andWhere({ device_type: 'laptop', name: 'device 2' }),
+)
 ```
 
 ---

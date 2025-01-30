@@ -3,7 +3,9 @@ import { connectParams } from './configs/db'
 import { Devices } from './schemas/devices.peek'
 
 async function get_devices() {
-  const data = await select<Devices>('devices', (qb) => qb.select(['name', 'device_type']).where({ name: 'device 1' }))
+  const data = await select<Devices>('devices', (qb) =>
+    qb.select(['name', 'device_type']).where({ name: 'device 1' }).orWhere({ device_type: 'laptop', name: 'device 2' }),
+  )
   return data
 }
 
