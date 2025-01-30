@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static ConnectionPool *pool = NULL;
-static MYSQL *conn = NULL;
+static ConnectionPool *pool = NULL; // Pool Manager
+static MYSQL *conn = NULL;          // Direct Connection
 
 /** Initialize the connection pool */
 napi_value Initialize(napi_env env, napi_callback_info info) {
@@ -30,6 +30,7 @@ napi_value Initialize(napi_env env, napi_callback_info info) {
     napi_get_value_string_utf8(env, args[3], database, sizeof(database), NULL);
     napi_get_value_int32(env, args[4], &port);
 
+    //? Step 1 : Setup Direct Conection
     if (conn != NULL) {
         mysql_close(conn);
     }
@@ -40,6 +41,7 @@ napi_value Initialize(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
+    //? Step 2 : Setup Connection Pool
     if (pool != NULL) {
         pool_destroy(pool);
     }
@@ -67,7 +69,7 @@ napi_value Cleanup(napi_env env, napi_callback_info info) {
     return result;
 }
 
-/** Function to Connect to MySQL with Parameters */
+/** Function to Connect to MySQL with Parameters @deprecated Use `initialize` instead */
 napi_value ConnectMySQL(napi_env env, napi_callback_info info) {
     size_t argc = 4;
     napi_value args[4];
@@ -220,13 +222,14 @@ napi_value Select(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    // Get a connection from the pool
+    //? Step 1: Get a connection from the pool
     MYSQL *conn = pool_get_connection(pool);
     if (!conn) {
         napi_throw_error(env, NULL, "Could not get database connection from pool");
         return NULL;
     }
 
+    //? Step 2: Use connection to execute query
     MYSQL_RES *res;
     if (mysql_query(conn, query) == 0) {
         res = mysql_store_result(conn);
@@ -257,6 +260,7 @@ napi_value Select(napi_env env, napi_callback_info info) {
     napi_throw_error(env, NULL, mysql_error(conn));
     napi_get_undefined(env, &result);
 
+    //? Step 3: Return connection to the pool
     pool_return_connection(pool, conn);
 
     return result;

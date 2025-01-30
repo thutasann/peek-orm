@@ -26,7 +26,11 @@ typedef struct {
 } PoolConnection;
 
 /**
- * Connection pool
+ * Connection pool Manager
+ * - It manages the connection pool
+ * - It provides a direct connection to the database
+ * - It provides a connection from the pool
+ * @note This is the manager of the connection pool
  */
 typedef struct {
     PoolConnection connections[MAX_POOL_SIZE];
