@@ -1,4 +1,4 @@
-import { InsertOptions, SelectQueryBuilder } from '../../types'
+import { SelectQueryBuilder } from '../../types'
 
 /**
  * MySQL Query Builder Implementation
@@ -122,25 +122,23 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  insert(options: InsertOptions<T>): SelectQueryBuilder<T> {
-    const { columns, values } = options
+  insert<R extends Partial<T>>(table: string, values: R | R[]): SelectQueryBuilder<T> {
+    this.tableName = table
+    const records = Array.isArray(values) ? values : [values]
+    if (records.length === 0) throw new Error('At least one record must be provided for insert')
 
-    if (!columns?.length || !values?.length) {
-      throw new Error('Both columns and values must be provided for insert')
-    }
+    const columns = Object.keys(records[0])
+    if (columns.length === 0) throw new Error('Records must contain at least one column')
 
-    const rows = values.map((row) => {
+    const rows = records.map((record) => {
       return columns.map((col) => {
-        const value = row[col as keyof typeof row]
-        if (value === undefined) {
-          throw new Error(`Missing value for column '${String(col)}'`)
-        }
+        const value = record[col as keyof typeof record]
         return typeof value === 'string' ? `'${value}'` : value
       })
     })
 
     this.insertedValues = {
-      columns: columns as string[],
+      columns,
       values: rows,
     }
 
@@ -217,7 +215,6 @@ class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     }
 
     const finalQuery = parts.join(' ') + ';'
-    console.log('finalQuery ==> ', finalQuery)
     return finalQuery
   }
 }

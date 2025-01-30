@@ -1,4 +1,4 @@
-import { InsertOptions, WhereCondition } from './condition.type'
+import { WhereCondition } from './condition.type'
 
 /**
  * Interface for building SQL SELECT queries in a fluent, chainable manner.
@@ -160,5 +160,5 @@ export interface SelectQueryBuilder<T = any> {
    * @example
    * .insert({ columns: ['name', 'email'], values: [{ name: 'John', email: 'john@example.com' }] })
    */
-  insert(options: InsertOptions<T>): SelectQueryBuilder<T>
+  insert<R extends Partial<T>>(table: string, values: R | R[]): SelectQueryBuilder<T>
 }

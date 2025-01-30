@@ -1,5 +1,5 @@
 import { insert as insertQuery, select as selectQuery } from '../../build/Release/peek-orm.node'
-import { InsertOptions, SelectQueryBuilder } from '../types'
+import { InsertedResult, SelectQueryBuilder } from '../types'
 import { createQueryBuilder } from './query-builder'
 
 /**
@@ -19,8 +19,7 @@ export class peek {
     table: string,
     callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
   ): Promise<T[]> {
-    const queryBuilder = createQueryBuilder<T>()
-    queryBuilder.from(table)
+    const queryBuilder = createQueryBuilder<T>().from(table)
     const query = callback(queryBuilder)
     const finalQuery = query.getQuery()
     return selectQuery(finalQuery) as unknown as T[]
@@ -36,8 +35,7 @@ export class peek {
     table: string,
     callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
   ): Promise<T> {
-    const queryBuilder = createQueryBuilder<T>()
-    queryBuilder.from(table)
+    const queryBuilder = createQueryBuilder<T>().from(table)
     const query = callback(queryBuilder)
     const finalQuery = query.getQuery()
     const result = await selectQuery(finalQuery)
@@ -46,15 +44,37 @@ export class peek {
 
   /**
    * Execute an INSERT query on a table
+   * @overload
    * @param table - Name of the table to insert into
-   * @param values - Values to insert
-   * @returns {Promise<void>} - Promise that resolves when the insert is complete
+   * @param values - Single record to insert
+   * @returns Promise with insert result and input values
    */
-  static async insert<T extends Record<string, any>>(table: string, values: InsertOptions<T>): Promise<void> {
-    const queryBuilder = createQueryBuilder<T>()
-    queryBuilder.from(table)
-    queryBuilder.insert(values)
-    const finalQuery = queryBuilder.getQuery()
-    return insertQuery(finalQuery)
+  static async insert<T extends Record<string, any>>(
+    table: string,
+    values: Partial<T>,
+  ): Promise<{ result: InsertedResult; values: Partial<T> }>
+
+  /**
+   * Execute an INSERT query on a table
+   * @overload
+   * @param table - Name of the table to insert into
+   * @param values - Array of records to insert
+   * @returns Promise with insert result and input values Array
+   */
+  static async insert<T extends Record<string, any>>(
+    table: string,
+    values: Partial<T>[],
+  ): Promise<{ result: InsertedResult; values: Partial<T>[] }>
+
+  static async insert<T extends Record<string, any>>(
+    table: string,
+    values: Partial<T> | Partial<T>[],
+  ): Promise<{
+    result: InsertedResult
+    values: Partial<T> | Partial<T>[]
+  }> {
+    const queryBuilder = createQueryBuilder<T>().from(table).insert(table, values)
+    const result = await insertQuery(queryBuilder.getQuery())
+    return { result, values }
   }
 }

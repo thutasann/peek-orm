@@ -11,14 +11,23 @@ export async function get_device_by_id(id: number): Promise<Devices> {
   return data
 }
 
-export async function get_device_by_id_native(): Promise<Devices[]> {
+export async function get_devices_native(): Promise<Devices[]> {
   const data = await peek.select<Devices>('devices', (qb) => qb.native(`SELECT * FROM devices`))
   return data
 }
 
 export async function insert_device(): Promise<void> {
-  await peek.insert('devices', {
-    columns: ['name', 'device_type'],
-    values: [{ name: 'device 4', device_type: 'car' }],
+  const response = await peek.insert<Devices>('devices', {
+    name: 'device 14',
+    device_type: 'car',
   })
+  console.log('response ==> ', response)
+}
+
+export async function insert_multiple_devices(): Promise<void> {
+  const response = await peek.insert<Devices>('devices', [
+    { name: 'device 14', device_type: 'car' },
+    { name: 'device 15', device_type: 'bike' },
+  ])
+  console.log('response ==> ', response)
 }
