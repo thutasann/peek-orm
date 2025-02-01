@@ -5,15 +5,15 @@ const { updateResult } = require('./utils/update_readme')
 
 const iterations = 1000
 
-async function select_benchmark_test() {
-  console.log('\nSelect Benchmark Test ==> ')
+async function device_benchmark_test() {
+  console.log('\nDevice Benchmark Test ==> ')
 
   /** Prepare the results array for table @type { any } */
   const results = []
 
   const select_all_devices = benchmark_args(get_all_devices, [], iterations, true)
   results.push({
-    Method: 'Select All Devices',
+    Method: 'Get All Devices',
     Time: select_all_devices.toFixed(6),
   })
   results.push({})
@@ -25,9 +25,9 @@ async function select_benchmark_test() {
   })
   results.push({})
 
-  await updateResult(results, './results/select.md', 'Select Benchmark')
+  await updateResult(results, './results/devices.md', 'Devices Benchmark')
 }
 
 module.exports = {
-  select_benchmark_test,
+  device_benchmark_test,
 }

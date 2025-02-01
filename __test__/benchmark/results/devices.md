@@ -1,8 +1,8 @@
-# Select Benchmark Results
+# Devices Benchmark Results
 
 | Method                          | Time (seconds) |
 | ------------------------------- | -------------- |
-| Select All Devices              | 0.215206       |
+| Get All Devices                 | 0.131643       |
 | -                               | -              |
-| Select All Devices Native Query | 0.097961       |
+| Select All Devices Native Query | 0.105344       |
 | -                               | -              |

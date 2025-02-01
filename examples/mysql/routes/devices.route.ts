@@ -4,7 +4,6 @@ const devicesController = new DevicesController()
 
 /**
  * ### Devices Routes
- * pls ignore the route methods, they are just for testing
  * - curl -X GET http://localhost:3000/api/devices
  * - curl -X PUT http://localhost:3000/api/devices/update
  * - curl -X PUT http://localhost:3000/api/devices/update-many
