@@ -1,6 +1,11 @@
 import { peek } from '../../../lib'
 import { Devices } from '../schemas/devices.peek'
 
+async function get_all_devices(): Promise<Devices[]> {
+  const data = await peek.select<Devices>('devices', (qb) => qb.select('*'))
+  return data
+}
+
 async function get_devices(): Promise<Devices[]> {
   const data = await peek.select<Devices>('devices', (qb) => qb.select('*').where('id > 1').where({ name: 'device 2' }))
   return data
@@ -57,6 +62,7 @@ async function delete_device() {
 }
 
 export const devicesService = {
+  get_all_devices,
   get_devices,
   get_device_by_id,
   get_devices_native,

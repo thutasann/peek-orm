@@ -5,12 +5,12 @@ import { devicesService } from '../services/devices.service'
 export class DevicesController {
   async getAlldevices(res: ServerResponse) {
     try {
-      const devices = await devicesService.get_devices_native()
+      const devices = await devicesService.get_devices()
       res.writeHead(200)
       res.end(JSON.stringify(devices))
     } catch (error) {
       res.writeHead(500)
-      res.end(JSON.stringify({ error: 'Internal Server Error' }))
+      res.end(JSON.stringify({ error: 'Internal Server Error', details: error }))
     }
   }
 

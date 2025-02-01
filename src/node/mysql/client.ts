@@ -169,7 +169,6 @@ export class MySQL {
    * @returns {Promise<boolean>} True if cleanup successful, false otherwise
    */
   async cleanup(): Promise<boolean> {
-    this.cacheManager.clearCache()
     return await cleanupFn()
   }
 

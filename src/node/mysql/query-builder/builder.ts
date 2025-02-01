@@ -207,7 +207,9 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
       return deleteQuery + ';'
     }
 
-    return BuildQueryHelper.buildSelectQuery(this).join(' ') + ';'
+    const selectQuery = BuildQueryHelper.buildSelectQuery(this).join(' ')
+    console.log(`${COLORS.blue}[SELECT]${COLORS.reset}: ${selectQuery}`)
+    return selectQuery + ';'
   }
 }
 

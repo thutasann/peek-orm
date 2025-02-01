@@ -122,8 +122,10 @@ export class BuildQueryHelper {
     const parts: string[] = []
 
     // Select and From clauses
-    const columns = builder.selectedColumns.map((col) => (col === '*' ? col : col.toString()))
-    parts.push(`SELECT ${columns.join(', ')}`)
+    const columns = builder.selectedColumns
+    const selectClause =
+      columns.length === 1 && columns[0] === '*' ? '*' : columns.map((col) => col.toString().trim()).join(', ')
+    parts.push(`SELECT ${selectClause}`)
     parts.push(`FROM ${builder.tableName}`)
 
     // Optional clauses
