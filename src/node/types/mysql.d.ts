@@ -67,5 +67,5 @@ declare module '*.node' {
    * @param query - SQL query
    * @returns {Promise<any>} - Query result
    */
-  export function updateOne(query: string): Promise<any>
+  export function update(query: string): Promise<any>
 }

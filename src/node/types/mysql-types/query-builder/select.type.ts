@@ -180,4 +180,11 @@ export interface QueryBuilder<T = any> {
    * .updateOne('users', { id: 1 }, { name: 'John', email: 'john@example.com' })
    */
   updateOne<R extends Partial<T>>(table: string, where: Partial<T>, values: R | R[]): QueryBuilder<T>
+  /**
+   * Adds an UPDATE clause to the query
+   * @param options - Update options
+   * @example
+   * .updateMany('users', { id: 1 }, { name: 'John', email: 'john@example.com' })
+   */
+  updateMany<R extends Partial<T>>(table: string, where: Partial<T>, values: R[]): QueryBuilder<T>
 }

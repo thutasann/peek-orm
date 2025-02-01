@@ -39,6 +39,18 @@ async function update_device() {
   return response
 }
 
+async function update_multiple_devices() {
+  const response = await peek.updateMany<Devices>('devices', { device_type: 'car updated' }, [
+    { device_type: 'car', sell_price: 1000 },
+  ])
+  return response
+}
+
+async function update_multiple_devices_with_null() {
+  const response = await peek.updateMany<Devices>('devices', { city: 'NULL' }, [{ city: 'london' }])
+  return response
+}
+
 export const devicesService = {
   get_devices,
   get_device_by_id,
@@ -46,4 +58,6 @@ export const devicesService = {
   insert_device,
   insert_multiple_devices,
   update_device,
+  update_multiple_devices,
+  update_multiple_devices_with_null,
 }

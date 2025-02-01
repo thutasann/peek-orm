@@ -51,5 +51,11 @@ console.log('response_2 ==> ', response_2) // { result: { affectedRows: 2, inser
 ## Update Queries
 
 ```ts
+// Update a single record
 const response_1 = await peek.updateOne<Devices>('devices', { id: 1 }, { name: 'device 1 updated' })
+
+// Update multiple records
+const response_2 = await peek.updateMany<Devices>('devices', { device_type: 'laptop' }, [
+  { name: 'device 1 updated', sell_price: 1000 },
+])
 ```

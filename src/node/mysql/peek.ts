@@ -1,8 +1,4 @@
-import {
-  insert as insertQuery,
-  select as selectQuery,
-  updateOne as updateOneQuery,
-} from '../../build/Release/peek-orm.node'
+import { insert as insertQuery, select as selectQuery, update as updateQuery } from '../../build/Release/peek-orm.node'
 import { InsertedResult, QueryBuilder } from '../types'
 import { createQueryBuilder } from './query-builder'
 
@@ -94,7 +90,24 @@ export class peek {
     values: Partial<T>,
   ): Promise<{ result: InsertedResult; values: Partial<T> }> {
     const queryBuilder = createQueryBuilder<T>().from(table).updateOne(table, where, values)
-    const result = await updateOneQuery(queryBuilder.getQuery())
+    const result = await updateQuery(queryBuilder.getQuery())
+    return { result, values }
+  }
+
+  /**
+   * Execute an UPDATE many query on a table
+   * @param table - Name of the table to update
+   * @param where - Where clause
+   * @param values - Array of records to update
+   * @returns Promise with update result and input values Array
+   */
+  static async updateMany<T extends Record<string, any>>(
+    table: string,
+    where: Partial<T>,
+    values: Partial<T>[],
+  ): Promise<{ result: InsertedResult; values: Partial<T>[] }> {
+    const queryBuilder = createQueryBuilder<T>().from(table).updateMany(table, where, values)
+    const result = await updateQuery(queryBuilder.getQuery())
     return { result, values }
   }
 }

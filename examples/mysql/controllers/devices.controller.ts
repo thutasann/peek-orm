@@ -52,4 +52,15 @@ export class DevicesController {
       res.end(JSON.stringify({ error: 'Internal Server Error' }))
     }
   }
+
+  async updateManyDevices(res: ServerResponse) {
+    try {
+      const response = await devicesService.update_multiple_devices()
+      res.writeHead(200)
+      res.end(JSON.stringify(response))
+    } catch (error) {
+      res.writeHead(500)
+      res.end(JSON.stringify({ error: 'Internal Server Error' }))
+    }
+  }
 }

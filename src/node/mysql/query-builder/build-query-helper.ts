@@ -83,12 +83,12 @@ export class BuildQueryHelper {
     const setStatements = columns
       .map((col, index) => {
         const value = values[0][index]
-        return `${col} = ${typeof value === 'string' ? `'${value}'` : value}`
+        return `${col} = ${typeof value === 'string' ? `'${value}'` : value === 'NULL' ? 'NULL' : value}`
       })
       .join(', ')
 
     const whereConditions = Object.entries(where)
-      .map(([key, value]) => `${key} = ${typeof value === 'string' ? `'${value}'` : value}`)
+      .map(([key, value]) => `${key} = ${value === 'NULL' ? 'NULL' : typeof value === 'string' ? `'${value}'` : value}`)
       .join(' AND ')
 
     return `UPDATE ${tableName} SET ${setStatements} WHERE ${whereConditions}`

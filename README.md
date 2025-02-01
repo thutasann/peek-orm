@@ -70,6 +70,7 @@ export const devices: CreateTableParams<Devices> = {
 
 - [Select Queries](./docs/queries-samples.md#select-queries)
 - [Insert Queries](./docs/queries-samples.md#insert-queries)
+- [Update Queries](./docs/queries-samples.md#update-queries)
 
 ---
 

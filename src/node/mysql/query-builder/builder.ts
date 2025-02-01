@@ -1,4 +1,5 @@
 import { QueryBuilder } from '../../types'
+import { COLORS } from '../../utils/logger'
 import { BuildQueryHelper } from './build-query-helper'
 
 /**
@@ -161,6 +162,17 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
     return this
   }
 
+  updateMany<R extends Partial<T>>(table: string, where: Partial<T>, values: R[]): QueryBuilder<T> {
+    this.tableName = table
+    const records = Array.isArray(values) ? values : [values]
+    this.updatedValues = {
+      columns: Object.keys(records[0]),
+      where,
+      values: records.map((record) => Object.values(record)),
+    }
+    return this
+  }
+
   getQuery(): string {
     if (this.nativeQuery) return this.nativeQuery
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
@@ -168,12 +180,14 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
     // INSERT Query
     if (this.insertedValues) {
       const insertQuery = BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues)
+      console.log(`${COLORS.green}[INSERT]${COLORS.reset}: ${insertQuery}`)
       return insertQuery + ';'
     }
 
     // UPDATE Query
     if (this.updatedValues) {
       const updateQuery = BuildQueryHelper.buildUpdateQuery(this.tableName, this.updatedValues)
+      console.log(`${COLORS.greenBright}[UPDATE]${COLORS.reset}: ${updateQuery}`)
       return updateQuery + ';'
     }
 
