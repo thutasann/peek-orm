@@ -3,6 +3,7 @@ const { peek } = require('../../../lib')
 
 async function get_big_table_service() {
   const response = await peek.select('big_table', (qb) => qb.select('*'))
+  console.log('big_table response length ==> ', response.length)
   return response
 }
 

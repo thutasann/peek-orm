@@ -11,7 +11,7 @@ async function big_table_benchmark_test() {
   /** Prepare the results array for table @type { any } */
   const results = []
 
-  const get_big_table = benchmark_args(get_big_table_service, [], iterations, true)
+  const get_big_table = await benchmark_args(get_big_table_service, [], iterations, true)
   results.push({
     Method: 'Get Big Table',
     Time: get_big_table.toFixed(6),

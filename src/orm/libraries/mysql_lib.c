@@ -218,117 +218,83 @@ napi_value Select(napi_env env, napi_callback_info info) {
     char query[2048];
     napi_get_value_string_utf8(env, args[0], query, sizeof(query), NULL);
 
-    if (!pool) {
+    if (!conn) {
         napi_throw_error(env, NULL, "Database not initialized");
         return NULL;
     }
 
-    //? Step 1: Get a connection from the pool
-    MYSQL *conn = pool_get_connection(pool);
-    if (!conn) {
-        napi_throw_error(env, NULL, "Could not get database connection from pool");
+    MYSQL *connection = pool_get_connection(pool);
+    if (!connection) {
+        napi_throw_error(env, NULL, "Failed to get database connection");
         return NULL;
     }
 
-    //? Step 2: Prepare and execute query
-    MYSQL_STMT *stmt = mysql_stmt_init(conn);
+    MYSQL_STMT *stmt = mysql_stmt_init(connection);
     if (!stmt) {
-        pool_return_connection(pool, conn);
-        napi_throw_error(env, NULL, "Failed to initialize statement");
+        pool_return_connection(pool, connection);
+        napi_throw_error(env, NULL, "Statement initialization failed");
         return NULL;
     }
 
-    if (mysql_stmt_prepare(stmt, query, strlen(query))) {
-        mysql_stmt_close(stmt);
-        pool_return_connection(pool, conn);
+    if (mysql_stmt_prepare(stmt, query, strlen(query)) || mysql_stmt_execute(stmt)) {
         napi_throw_error(env, NULL, mysql_stmt_error(stmt));
-        return NULL;
-    }
-
-    if (mysql_stmt_execute(stmt)) {
         mysql_stmt_close(stmt);
-        pool_return_connection(pool, conn);
-        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        pool_return_connection(pool, connection);
         return NULL;
     }
 
-    //? Step 3: Process result
     MYSQL_RES *metadata = mysql_stmt_result_metadata(stmt);
     if (!metadata) {
+        napi_throw_error(env, NULL, "Failed to retrieve metadata");
         mysql_stmt_close(stmt);
-        pool_return_connection(pool, conn);
-        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        pool_return_connection(pool, connection);
         return NULL;
     }
 
     unsigned int num_fields = mysql_num_fields(metadata);
     MYSQL_FIELD *fields = mysql_fetch_fields(metadata);
-
-    // Prepare bind buffers
     MYSQL_BIND *bind = (MYSQL_BIND *)calloc(num_fields, sizeof(MYSQL_BIND));
-    char **row_data = (char **)malloc(num_fields * sizeof(char *));
-    unsigned long *lengths = (unsigned long *)malloc(num_fields * sizeof(unsigned long));
-    bool *is_nulls = (bool *)malloc(num_fields * sizeof(bool));
 
-    // Initialize buffers for each column
+    char row_data[num_fields][8192];
+    unsigned long lengths[num_fields];
+    bool is_nulls[num_fields];
+
     for (unsigned int i = 0; i < num_fields; i++) {
-        row_data[i] = (char *)malloc(8192);
         bind[i].buffer_type = MYSQL_TYPE_STRING;
         bind[i].buffer = row_data[i];
-        bind[i].buffer_length = 8192;
+        bind[i].buffer_length = sizeof(row_data[i]);
         bind[i].length = &lengths[i];
-        bind[i].is_null = (bool *)&is_nulls[i];
+        bind[i].is_null = &is_nulls[i];
     }
 
     if (mysql_stmt_bind_result(stmt, bind)) {
-        // Cleanup and throw error
-        for (unsigned int i = 0; i < num_fields; i++)
-            free(row_data[i]);
-        free(row_data);
-        free(bind);
-        free(lengths);
-        free(is_nulls);
-        mysql_free_result(metadata);
-        mysql_stmt_close(stmt);
-        pool_return_connection(pool, conn);
-        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
-        return NULL;
+        napi_throw_error(env, NULL, "Failed to bind result");
+        goto cleanup;
     }
 
-    //? Step 4: Create result array
-    napi_value array;
-    napi_create_array(env, &array);
+    napi_create_array(env, &result);
     uint32_t row_index = 0;
 
-    //? Step 5: Fetch and process rows
     while (!mysql_stmt_fetch(stmt)) {
         napi_value row_obj;
         napi_create_object(env, &row_obj);
 
         for (unsigned int i = 0; i < num_fields; i++) {
             napi_value field_value;
-            if (is_nulls[i]) {
-                napi_get_null(env, &field_value);
-            } else {
-                napi_create_string_utf8(env, row_data[i], lengths[i], &field_value);
-            }
+            napi_create_string_utf8(env, is_nulls[i] ? "" : row_data[i], lengths[i], &field_value);
             napi_set_named_property(env, row_obj, fields[i].name, field_value);
         }
-        napi_set_element(env, array, row_index++, row_obj);
+
+        napi_set_element(env, result, row_index++, row_obj);
     }
 
-    //? Step 6: Cleanup
-    for (unsigned int i = 0; i < num_fields; i++)
-        free(row_data[i]);
-    free(row_data);
-    free(bind);
-    free(lengths);
-    free(is_nulls);
+cleanup:
     mysql_free_result(metadata);
     mysql_stmt_close(stmt);
-    pool_return_connection(pool, conn);
+    pool_return_connection(pool, connection);
+    free(bind);
 
-    return array;
+    return result;
 }
 
 /** Function to Insert Data into MySQL */
