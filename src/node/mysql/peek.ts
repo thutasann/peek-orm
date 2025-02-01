@@ -1,5 +1,9 @@
-import { insert as insertQuery, select as selectQuery } from '../../build/Release/peek-orm.node'
-import { InsertedResult, SelectQueryBuilder } from '../types'
+import {
+  insert as insertQuery,
+  select as selectQuery,
+  updateOne as updateOneQuery,
+} from '../../build/Release/peek-orm.node'
+import { InsertedResult, QueryBuilder } from '../types'
 import { createQueryBuilder } from './query-builder'
 
 /**
@@ -17,7 +21,7 @@ export class peek {
    */
   static async select<T extends Record<string, any>>(
     table: string,
-    callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
+    callback: (queryBuilder: QueryBuilder<T>) => QueryBuilder<T>,
   ): Promise<T[]> {
     const queryBuilder = createQueryBuilder<T>().from(table)
     const query = callback(queryBuilder)
@@ -33,7 +37,7 @@ export class peek {
    */
   static async selectOne<T extends Record<string, any>>(
     table: string,
-    callback: (queryBuilder: SelectQueryBuilder<T>) => SelectQueryBuilder<T>,
+    callback: (queryBuilder: QueryBuilder<T>) => QueryBuilder<T>,
   ): Promise<T> {
     const queryBuilder = createQueryBuilder<T>().from(table)
     const query = callback(queryBuilder)
@@ -75,6 +79,21 @@ export class peek {
   }> {
     const queryBuilder = createQueryBuilder<T>().from(table).insert(table, values)
     const result = await insertQuery(queryBuilder.getQuery())
+    return { result, values }
+  }
+
+  /**
+   * Execute an UPDATE one query on a table
+   * @param table - Name of the table to update
+   * @param values - Single record to update
+   * @returns Promise with update result and input values
+   */
+  static async updateOne<T extends Record<string, any>>(
+    table: string,
+    values: Partial<T>,
+  ): Promise<{ result: InsertedResult; values: Partial<T> }> {
+    const queryBuilder = createQueryBuilder<T>().from(table).updateOne(table, values)
+    const result = await updateOneQuery(queryBuilder.getQuery())
     return { result, values }
   }
 }

@@ -1,4 +1,4 @@
-import { SelectQueryBuilder } from '../../types'
+import { QueryBuilder } from '../../types'
 import { BuildQueryHelper } from './build-query-helper'
 
 /**
@@ -8,7 +8,7 @@ import { BuildQueryHelper } from './build-query-helper'
  * @author [thutasann](https://github.com/thutasann)
  * @template T - Type of the entity being queried
  */
-export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
+export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
   public selectedColumns: Array<keyof T | '*'> = ['*']
   public tableName: string = ''
   public whereConditions: string[] = []
@@ -20,8 +20,9 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
   public offsetValue?: number
   public nativeQuery?: string
   public insertedValues?: { columns: string[]; values: any[][] }
+  public updatedValues?: { columns: string[]; values: any[][] }
 
-  select(columns: '*' | keyof T | Array<keyof T>): SelectQueryBuilder<T> {
+  select(columns: '*' | keyof T | Array<keyof T>): QueryBuilder<T> {
     if (columns === '*') {
       this.selectedColumns = ['*']
     } else {
@@ -30,17 +31,17 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  native(query: string): SelectQueryBuilder<T> {
+  native(query: string): QueryBuilder<T> {
     this.nativeQuery = query
     return this
   }
 
-  from(table: string): SelectQueryBuilder<T> {
+  from(table: string): QueryBuilder<T> {
     this.tableName = table
     return this
   }
 
-  where(condition: string | object): SelectQueryBuilder<T> {
+  where(condition: string | object): QueryBuilder<T> {
     if (typeof condition === 'string') {
       this.whereConditions.push(condition)
     } else {
@@ -52,11 +53,11 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  andWhere(condition: string | object): SelectQueryBuilder<T> {
+  andWhere(condition: string | object): QueryBuilder<T> {
     return this.where(condition)
   }
 
-  orWhere(condition: string | object): SelectQueryBuilder<T> {
+  orWhere(condition: string | object): QueryBuilder<T> {
     if (this.whereConditions.length === 0) {
       return this.where(condition)
     }
@@ -74,32 +75,32 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  join(table: string, condition: string): SelectQueryBuilder<T> {
+  join(table: string, condition: string): QueryBuilder<T> {
     this.joinClauses.push(`JOIN ${table} ON ${condition}`)
     return this
   }
 
-  leftJoin(table: string, condition: string): SelectQueryBuilder<T> {
+  leftJoin(table: string, condition: string): QueryBuilder<T> {
     this.joinClauses.push(`LEFT JOIN ${table} ON ${condition}`)
     return this
   }
 
-  rightJoin(table: string, condition: string): SelectQueryBuilder<T> {
+  rightJoin(table: string, condition: string): QueryBuilder<T> {
     this.joinClauses.push(`RIGHT JOIN ${table} ON ${condition}`)
     return this
   }
 
-  innerJoin(table: string, condition: string): SelectQueryBuilder<T> {
+  innerJoin(table: string, condition: string): QueryBuilder<T> {
     this.joinClauses.push(`INNER JOIN ${table} ON ${condition}`)
     return this
   }
 
-  groupBy(columns: string | string[]): SelectQueryBuilder<T> {
+  groupBy(columns: string | string[]): QueryBuilder<T> {
     this.groupByColumns = Array.isArray(columns) ? columns : [columns]
     return this
   }
 
-  having(condition: string | object): SelectQueryBuilder<T> {
+  having(condition: string | object): QueryBuilder<T> {
     if (typeof condition === 'string') {
       this.havingConditions.push(condition)
     } else {
@@ -111,22 +112,22 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
-  orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): SelectQueryBuilder<T> {
+  orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): QueryBuilder<T> {
     this.orderByStatements.push(`${column} ${direction}`)
     return this
   }
 
-  limit(limit: number): SelectQueryBuilder<T> {
+  limit(limit: number): QueryBuilder<T> {
     this.limitValue = limit
     return this
   }
 
-  offset(offset: number): SelectQueryBuilder<T> {
+  offset(offset: number): QueryBuilder<T> {
     this.offsetValue = offset
     return this
   }
 
-  insert<R extends Partial<T>>(table: string, values: R | R[]): SelectQueryBuilder<T> {
+  insert<R extends Partial<T>>(table: string, values: R | R[]): QueryBuilder<T> {
     this.tableName = table
     const records = Array.isArray(values) ? values : [values]
     if (records.length === 0) throw new Error('At least one record must be provided for insert')
@@ -149,23 +150,40 @@ export class MySQLQueryBuilder<T = any> implements SelectQueryBuilder<T> {
     return this
   }
 
+  updateOne<R extends Partial<T>>(table: string, values: R | R[]): QueryBuilder<T> {
+    this.tableName = table
+    const records = Array.isArray(values) ? values : [values]
+    this.updatedValues = {
+      columns: Object.keys(records[0]),
+      values: records.map((record) => Object.values(record)),
+    }
+    return this
+  }
+
   getQuery(): string {
     if (this.nativeQuery) return this.nativeQuery
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
 
-    const parts = this.insertedValues
-      ? [BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues)]
-      : BuildQueryHelper.buildSelectQuery(this)
+    // INSERT Query
+    if (this.insertedValues) {
+      return BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues) + ';'
+    }
 
-    return parts.join(' ') + ';'
+    // UPDATE Query
+    if (this.updatedValues) {
+      return BuildQueryHelper.buildUpdateQuery(this.tableName, this.updatedValues) + ';'
+    }
+
+    // SELECT Query
+    return BuildQueryHelper.buildSelectQuery(this).join(' ') + ';'
   }
 }
 
 /**
  * Create a new query builder instance
  * @template T - Type of the entity being queried
- * @returns {SelectQueryBuilder<T>} - A new query builder instance
+ * @returns {QueryBuilder<T>} - A new query builder instance
  */
-export function createQueryBuilder<T>(): SelectQueryBuilder<T> {
+export function createQueryBuilder<T>(): QueryBuilder<T> {
   return new MySQLQueryBuilder<T>()
 }

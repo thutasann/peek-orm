@@ -61,4 +61,11 @@ declare module '*.node' {
    * @returns {Promise<any>} - Query result
    */
   export function insert(query: string): Promise<any>
+
+  /**
+   * Update query
+   * @param query - SQL query
+   * @returns {Promise<any>} - Query result
+   */
+  export function updateOne(query: string): Promise<any>
 }

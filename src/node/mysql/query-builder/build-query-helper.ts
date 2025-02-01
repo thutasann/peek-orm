@@ -7,13 +7,6 @@ import { MySQLQueryBuilder } from './builder'
  * @author [thutasann](https://github.com/thutasann)
  */
 export class BuildQueryHelper {
-  static buildInsertQuery(tableName: string, insertedValues: { columns: string[]; values: any[][] }): string {
-    const { columns, values } = insertedValues
-    const columnsList = columns.join(', ')
-    const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
-    return `INSERT INTO ${tableName} (${columnsList}) VALUES ${valuesList}`
-  }
-
   private static addJoinClauses(parts: string[], joinClauses: string[]): void {
     if (joinClauses.length > 0) {
       parts.push(joinClauses.join(' '))
@@ -64,6 +57,20 @@ export class BuildQueryHelper {
       }
       parts.push(`OFFSET ${offsetValue}`)
     }
+  }
+
+  static buildInsertQuery(tableName: string, insertedValues: { columns: string[]; values: any[][] }): string {
+    const { columns, values } = insertedValues
+    const columnsList = columns.join(', ')
+    const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
+    return `INSERT INTO ${tableName} (${columnsList}) VALUES ${valuesList}`
+  }
+
+  static buildUpdateQuery(tableName: string, updateValues: { columns: string[]; values: any[][] }): string {
+    const { columns, values } = updateValues
+    const columnsList = columns.join(', ')
+    const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
+    return `UPDATE ${tableName} SET ${columnsList} = ${valuesList}`
   }
 
   static buildSelectQuery(builder: MySQLQueryBuilder): string[] {
