@@ -3,7 +3,7 @@ const { get_all_devices, get_all_devices_native_query } = require('./services/de
 const { benchmark_args } = require('./utils')
 const { updateResult } = require('./utils/update_readme')
 
-const iterations = 1000
+const iterations = 10000
 
 async function device_benchmark_test() {
   console.log('\nDevice Benchmark Test ==> ')
