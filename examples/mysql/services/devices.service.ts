@@ -16,21 +16,27 @@ async function get_devices_native(): Promise<Devices[]> {
   return data
 }
 
-async function insert_device(): Promise<void> {
-  const response = await peek.insert<Devices>('devices', {
-    name: 'device 17',
-    device_type: 'car',
-    sell_price: 2000,
-  })
-  console.log('response ==> ', response)
+async function insert_device(payload: Partial<Devices>) {
+  const response = await peek.insert<Devices>('devices', payload)
+  return response
 }
 
-async function insert_multiple_devices(): Promise<void> {
+async function insert_multiple_devices() {
   const response = await peek.insert<Devices>('devices', [
     { name: 'device 25', device_type: 'car', sell_price: 4000 },
     { name: 'device 29', device_type: 'bike', sell_price: 5000 },
   ])
   console.log('response ==> ', response)
+  return response
+}
+
+async function update_device() {
+  const response = await peek.updateOne<Devices>(
+    'devices',
+    { id: 1 },
+    { name: 'device 1 updated', device_type: 'bike', sell_price: 1000 },
+  )
+  return response
 }
 
 export const devicesService = {
@@ -39,4 +45,5 @@ export const devicesService = {
   get_devices_native,
   insert_device,
   insert_multiple_devices,
+  update_device,
 }

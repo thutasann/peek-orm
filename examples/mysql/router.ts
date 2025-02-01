@@ -2,6 +2,12 @@ import { IncomingMessage, ServerResponse } from 'http'
 import { devicesRoutes } from './routes/devices.route'
 import { welcomeRoute } from './routes/welcome.route'
 
+/**
+ * ### Router
+ * @param req - IncomingMessage
+ * @param res - ServerResponse
+ * @param path - string | null
+ */
 export const router = (req: IncomingMessage, res: ServerResponse, path: string | null) => {
   res.setHeader('Content-Type', 'application/json')
 

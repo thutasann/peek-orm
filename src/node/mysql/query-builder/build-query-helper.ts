@@ -59,6 +59,12 @@ export class BuildQueryHelper {
     }
   }
 
+  /**
+   * Build an INSERT query
+   * @param tableName - Name of the table to insert into
+   * @param insertedValues - Insert values
+   * @returns INSERT query
+   */
   static buildInsertQuery(tableName: string, insertedValues: { columns: string[]; values: any[][] }): string {
     const { columns, values } = insertedValues
     const columnsList = columns.join(', ')
@@ -66,13 +72,33 @@ export class BuildQueryHelper {
     return `INSERT INTO ${tableName} (${columnsList}) VALUES ${valuesList}`
   }
 
-  static buildUpdateQuery(tableName: string, updateValues: { columns: string[]; values: any[][] }): string {
-    const { columns, values } = updateValues
-    const columnsList = columns.join(', ')
-    const valuesList = values.map((row) => `(${row.join(', ')})`).join(', ')
-    return `UPDATE ${tableName} SET ${columnsList} = ${valuesList}`
+  /**
+   * Build an UPDATE query
+   * @param tableName - Name of the table to update
+   * @param updateValues - Update values
+   * @returns UPDATE query
+   */
+  static buildUpdateQuery(tableName: string, updateValues: { columns: string[]; where: any; values: any[][] }): string {
+    const { columns, where, values } = updateValues
+    const setStatements = columns
+      .map((col, index) => {
+        const value = values[0][index]
+        return `${col} = ${typeof value === 'string' ? `'${value}'` : value}`
+      })
+      .join(', ')
+
+    const whereConditions = Object.entries(where)
+      .map(([key, value]) => `${key} = ${typeof value === 'string' ? `'${value}'` : value}`)
+      .join(' AND ')
+
+    return `UPDATE ${tableName} SET ${setStatements} WHERE ${whereConditions}`
   }
 
+  /**
+   * Build a SELECT query
+   * @param builder - Query builder
+   * @returns SELECT query
+   */
   static buildSelectQuery(builder: MySQLQueryBuilder): string[] {
     const parts: string[] = []
 

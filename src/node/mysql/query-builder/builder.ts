@@ -20,7 +20,7 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
   public offsetValue?: number
   public nativeQuery?: string
   public insertedValues?: { columns: string[]; values: any[][] }
-  public updatedValues?: { columns: string[]; values: any[][] }
+  public updatedValues?: { columns: string[]; where: Partial<T>; values: any[][] }
 
   select(columns: '*' | keyof T | Array<keyof T>): QueryBuilder<T> {
     if (columns === '*') {
@@ -150,11 +150,12 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
     return this
   }
 
-  updateOne<R extends Partial<T>>(table: string, values: R | R[]): QueryBuilder<T> {
+  updateOne<R extends Partial<T>>(table: string, where: Partial<T>, values: R | R[]): QueryBuilder<T> {
     this.tableName = table
     const records = Array.isArray(values) ? values : [values]
     this.updatedValues = {
       columns: Object.keys(records[0]),
+      where,
       values: records.map((record) => Object.values(record)),
     }
     return this
@@ -166,15 +167,16 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
 
     // INSERT Query
     if (this.insertedValues) {
-      return BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues) + ';'
+      const insertQuery = BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues)
+      return insertQuery + ';'
     }
 
     // UPDATE Query
     if (this.updatedValues) {
-      return BuildQueryHelper.buildUpdateQuery(this.tableName, this.updatedValues) + ';'
+      const updateQuery = BuildQueryHelper.buildUpdateQuery(this.tableName, this.updatedValues)
+      return updateQuery + ';'
     }
 
-    // SELECT Query
     return BuildQueryHelper.buildSelectQuery(this).join(' ') + ';'
   }
 }

@@ -1,16 +1,24 @@
 import { IncomingMessage, ServerResponse } from 'http'
-import { devicesService } from '../services/devices.service'
+import { DevicesController } from '../controllers/devices.controller'
+const devicesController = new DevicesController()
 
+/**
+ * ### Devices Routes
+ * pls ignore the route methods, they are just for testing
+ * - curl http://localhost:3000/api/devices
+ * - curl http://localhost:3000/api/devices/update
+ * - curl http://localhost:3000/api/devices/id
+ * - curl -X POST http://localhost:3000/api/devices/insert
+ */
 export const devicesRoutes = async (req: IncomingMessage, res: ServerResponse, path: string) => {
   if (path === '/api/devices' && req.method === 'GET') {
-    try {
-      const devices = await devicesService.get_devices_native()
-      res.writeHead(200)
-      res.end(JSON.stringify(devices))
-    } catch (error) {
-      res.writeHead(500)
-      res.end(JSON.stringify({ error: 'Internal Server Error' }))
-    }
+    return await devicesController.getAlldevices(res)
+  } else if (path === '/api/devices/update' && req.method === 'GET') {
+    return await devicesController.updateDevice(res)
+  } else if (path === '/api/devices/id' && req.method === 'GET') {
+    return await devicesController.getDeviceById(res, 1)
+  } else if (path === '/api/devices/insert' && req.method === 'GET') {
+    return await devicesController.insertDevice(res)
   } else {
     res.writeHead(404)
     res.end(JSON.stringify({ error: 'Not Found' }))

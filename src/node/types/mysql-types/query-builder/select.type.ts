@@ -177,7 +177,7 @@ export interface QueryBuilder<T = any> {
    * Adds an UPDATE clause to the query
    * @param options - Update options
    * @example
-   * .update({ columns: ['name', 'email'], values: [{ name: 'John', email: 'john@example.com' }] })
+   * .updateOne('users', { id: 1 }, { name: 'John', email: 'john@example.com' })
    */
-  updateOne<R extends Partial<T>>(table: string, values: R | R[]): QueryBuilder<T>
+  updateOne<R extends Partial<T>>(table: string, where: Partial<T>, values: R | R[]): QueryBuilder<T>
 }

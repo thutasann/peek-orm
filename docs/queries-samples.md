@@ -47,3 +47,9 @@ const response_2 = await peek.insert<Devices>('devices', [
 console.log('response_1 ==> ', response_1) // { result: { affectedRows: 1, insertId: 10 }, values: ... }
 console.log('response_2 ==> ', response_2) // { result: { affectedRows: 2, insertId: 10 }, values: ... }
 ```
+
+## Update Queries
+
+```ts
+const response_1 = await peek.updateOne<Devices>('devices', { id: 1 }, { name: 'device 1 updated' })
+```

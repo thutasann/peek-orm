@@ -90,9 +90,10 @@ export class peek {
    */
   static async updateOne<T extends Record<string, any>>(
     table: string,
+    where: Partial<T>,
     values: Partial<T>,
   ): Promise<{ result: InsertedResult; values: Partial<T> }> {
-    const queryBuilder = createQueryBuilder<T>().from(table).updateOne(table, values)
+    const queryBuilder = createQueryBuilder<T>().from(table).updateOne(table, where, values)
     const result = await updateOneQuery(queryBuilder.getQuery())
     return { result, values }
   }
