@@ -51,6 +51,11 @@ async function update_multiple_devices_with_null() {
   return response
 }
 
+async function delete_device() {
+  const response = await peek.delete<Devices>('devices', { id: 30 })
+  return response
+}
+
 export const devicesService = {
   get_devices,
   get_device_by_id,
@@ -60,4 +65,5 @@ export const devicesService = {
   update_device,
   update_multiple_devices,
   update_multiple_devices_with_null,
+  delete_device,
 }

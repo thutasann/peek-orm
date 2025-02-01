@@ -68,4 +68,11 @@ declare module '*.node' {
    * @returns {Promise<any>} - Query result
    */
   export function update(query: string): Promise<any>
+
+  /**
+   * Delete query
+   * @param query - SQL query
+   * @returns {Promise<any>} - Query result
+   */
+  export function deleteQuery(query: string): Promise<any>
 }

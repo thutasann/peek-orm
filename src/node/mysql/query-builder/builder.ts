@@ -22,6 +22,7 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
   public nativeQuery?: string
   public insertedValues?: { columns: string[]; values: any[][] }
   public updatedValues?: { columns: string[]; where: Partial<T>; values: any[][] }
+  public deletedValues?: { where: Partial<T> }
 
   select(columns: '*' | keyof T | Array<keyof T>): QueryBuilder<T> {
     if (columns === '*') {
@@ -173,6 +174,14 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
     return this
   }
 
+  delete(table: string, where: Partial<T>): QueryBuilder<T> {
+    this.tableName = table
+    this.deletedValues = {
+      where,
+    }
+    return this
+  }
+
   getQuery(): string {
     if (this.nativeQuery) return this.nativeQuery
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
@@ -189,6 +198,13 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
       const updateQuery = BuildQueryHelper.buildUpdateQuery(this.tableName, this.updatedValues)
       console.log(`${COLORS.greenBright}[UPDATE]${COLORS.reset}: ${updateQuery}`)
       return updateQuery + ';'
+    }
+
+    // DELETE Query
+    if (this.deletedValues) {
+      const deleteQuery = BuildQueryHelper.buildDeleteQuery(this.tableName, this.deletedValues)
+      console.log(`${COLORS.red}[DELETE]${COLORS.reset}: ${deleteQuery}`)
+      return deleteQuery + ';'
     }
 
     return BuildQueryHelper.buildSelectQuery(this).join(' ') + ';'

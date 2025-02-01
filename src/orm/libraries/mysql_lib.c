@@ -377,3 +377,55 @@ napi_value Update(napi_env env, napi_callback_info info) {
 
     return result;
 }
+
+/** Function to Delete Data from MySQL */
+napi_value Delete(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1], result;
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    if (argc < 1) {
+        napi_throw_error(env, NULL, "Expected 1 argument: query");
+        return NULL;
+    }
+
+    char query[2048];
+    napi_get_value_string_utf8(env, args[0], query, sizeof(query), NULL);
+
+    if (!pool) {
+        napi_throw_error(env, NULL, "Database not initialized");
+        return NULL;
+    }
+
+    //? Step 1: Get a connection from the pool
+    MYSQL *conn = pool_get_connection(pool);
+    if (!conn) {
+        napi_throw_error(env, NULL, "Could not get database connection from pool");
+        return NULL;
+    }
+
+    //? Step 2: Use connection to execute query
+    if (mysql_query(conn, query) == 0) {
+        my_ulonglong affected_rows = mysql_affected_rows(conn);
+
+        napi_value obj;
+        napi_create_object(env, &obj);
+
+        napi_value affected_rows_value;
+        napi_create_int64(env, (int64_t)affected_rows, &affected_rows_value);
+        napi_set_named_property(env, obj, "affectedRows", affected_rows_value);
+
+        //? Step 3: Return connection to the pool
+        pool_return_connection(pool, conn);
+
+        return obj;
+    }
+
+    napi_throw_error(env, NULL, mysql_error(conn));
+    napi_get_undefined(env, &result);
+
+    //? Step 3: Return connection to the pool
+    pool_return_connection(pool, conn);
+
+    return result;
+}

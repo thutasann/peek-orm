@@ -187,4 +187,12 @@ export interface QueryBuilder<T = any> {
    * .updateMany('users', { id: 1 }, { name: 'John', email: 'john@example.com' })
    */
   updateMany<R extends Partial<T>>(table: string, where: Partial<T>, values: R[]): QueryBuilder<T>
+
+  /**
+   * Adds a DELETE clause to the query
+   * @param options - Delete options
+   * @example
+   * .delete('users', { id: 1 })
+   */
+  delete(table: string, where: Partial<T>): QueryBuilder<T>
 }

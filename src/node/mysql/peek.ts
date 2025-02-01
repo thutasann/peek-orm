@@ -1,4 +1,9 @@
-import { insert as insertQuery, select as selectQuery, update as updateQuery } from '../../build/Release/peek-orm.node'
+import {
+  deleteQuery,
+  insert as insertQuery,
+  select as selectQuery,
+  update as updateQuery,
+} from '../../build/Release/peek-orm.node'
 import { InsertedResult, QueryBuilder } from '../types'
 import { createQueryBuilder } from './query-builder'
 
@@ -109,5 +114,20 @@ export class peek {
     const queryBuilder = createQueryBuilder<T>().from(table).updateMany(table, where, values)
     const result = await updateQuery(queryBuilder.getQuery())
     return { result, values }
+  }
+
+  /**
+   * Execute a DELETE query on a table
+   * @param table - Name of the table to delete from
+   * @param where - Where clause
+   * @returns Promise with delete result
+   */
+  static async delete<T extends Record<string, any>>(
+    table: string,
+    where: Partial<T>,
+  ): Promise<{ result: InsertedResult }> {
+    const queryBuilder = createQueryBuilder<T>().from(table).delete(table, where)
+    const result = await deleteQuery(queryBuilder.getQuery())
+    return { result }
   }
 }

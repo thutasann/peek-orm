@@ -95,6 +95,25 @@ export class BuildQueryHelper {
   }
 
   /**
+   * Build a DELETE query
+   * @param tableName - Name of the table to delete from
+   * @param where - Where clause
+   * @returns DELETE query
+   */
+  static buildDeleteQuery(tableName: string, deletedValues: { where: Record<string, any> }): string {
+    const { where } = deletedValues
+    const whereConditions = Object.entries(where)
+      .map(([key, value]) => {
+        if (value === null || value === 'NULL') {
+          return `${key} IS NULL`
+        }
+        return `${key} = ${typeof value === 'string' ? `'${value}'` : value}`
+      })
+      .join(' AND ')
+    return `DELETE FROM ${tableName} WHERE ${whereConditions}`
+  }
+
+  /**
    * Build a SELECT query
    * @param builder - Query builder
    * @returns SELECT query

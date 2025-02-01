@@ -63,4 +63,10 @@ export class DevicesController {
       res.end(JSON.stringify({ error: 'Internal Server Error' }))
     }
   }
+
+  async deleteDevice(res: ServerResponse) {
+    const response = await devicesService.delete_device()
+    res.writeHead(200)
+    res.end(JSON.stringify(response))
+  }
 }
