@@ -1,6 +1,12 @@
 import fs, { readdirSync } from 'fs'
 import { join, resolve } from 'path'
-import { cleanup as cleanupFn, closeMySQL, createTable, initialize } from '../../build/Release/peek-orm.node'
+import {
+  cleanup as cleanupFn,
+  closeMySQL,
+  createIndex,
+  createTable,
+  initialize,
+} from '../../build/Release/peek-orm.node'
 import { ConnectParams, CreateTableParams } from '../types/mysql-types'
 import { COLORS, logger } from '../utils/logger'
 import { CacheManager } from './cache-manager'
@@ -26,7 +32,7 @@ export class MySQL {
    * @returns {Promise<boolean>} True if table created successfully, false otherwise
    */
   private async createTable(params: CreateTableParams<Record<any, any>>): Promise<boolean> {
-    const { name, columns } = params
+    const { name, columns, indexes } = params
     const foreignKeys: string[] = []
 
     const columnDefinitions = columns
@@ -73,7 +79,31 @@ export class MySQL {
     const tableDefinition =
       foreignKeys.length > 0 ? `${columnDefinitions}, ${foreignKeys.join(', ')}` : columnDefinitions
 
-    return createTable(name, tableDefinition)
+    const create_table_result = await createTable(name, tableDefinition)
+    if (create_table_result) {
+      if (indexes) {
+        for (const index of indexes) {
+          const formattedColumns = index.columns.join(', ')
+          try {
+            const result = await createIndex(name, index.indexName, formattedColumns)
+            if (result) {
+              console.log(
+                `${COLORS.greenBright}[INDEX] ${index.indexName} created successfully on table ${COLORS.blue}${name}${COLORS.reset}`,
+              )
+            } else {
+              console.log(
+                `${COLORS.red}[INDEX] ${index.indexName} already exists on table ${COLORS.blue}${name}${COLORS.reset}`,
+              )
+            }
+          } catch (error) {
+            logger.error(`Failed to create index ${index.indexName}:`, error)
+          }
+        }
+      }
+    } else {
+      throw new Error(`Failed to create table ${name}: ${create_table_result}`)
+    }
+    return create_table_result
   }
 
   /**

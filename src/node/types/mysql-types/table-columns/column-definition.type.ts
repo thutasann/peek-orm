@@ -62,6 +62,20 @@ export type ColumnDefinition<TName> = {
 }
 
 /**
+ * Create index params
+ */
+export type CreateIndexParams<T> = {
+  /**
+   * Index name
+   */
+  indexName: string
+  /**
+   * Columns
+   */
+  columns: (keyof T)[]
+}
+
+/**
  * Create table params
  */
 export type CreateTableParams<T extends Record<string, unknown>> = {
@@ -73,4 +87,8 @@ export type CreateTableParams<T extends Record<string, unknown>> = {
    * Columns Definition
    */
   columns: ColumnDefinition<keyof T>[]
+  /**
+   * Indexes
+   */
+  indexes?: CreateIndexParams<T>[]
 }

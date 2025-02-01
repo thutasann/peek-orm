@@ -3,6 +3,23 @@
 In this section, we will show you how to use </br>
 the `peek.select`, `peek.insert`, `peek.update`, and `peek.delete` methods.
 
+## Create Index
+
+```ts
+const tableName = 'your_table_name'
+const indexName = 'your_index_name'
+const columns = 'column1, column2' // Specify the columns for the index
+
+mysqlModule
+  .createIndex(tableName, indexName, columns)
+  .then((result) => {
+    console.log('Index created successfully:', result)
+  })
+  .catch((err) => {
+    console.error('Error creating index:', err)
+  })
+```
+
 ## Select Queries
 
 ```ts

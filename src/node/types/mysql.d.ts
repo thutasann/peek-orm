@@ -41,12 +41,21 @@ declare module '*.node' {
   export function closeMySQL(): boolean
 
   /**
+   * Create index
+   * @param table_name - Table name
+   * @param index_name - Index name
+   * @param columns - Columns
+   * @returns {boolean} - True if index created successfully, false otherwise
+   */
+  export function createIndex(table_name: string, index_name: string, columns: string): Promise<boolean>
+
+  /**
    * Create table
    * @param table_name - Table name
    * @param column_definitions - Column definitions
    * @returns {boolean} - True if table created successfully, false otherwise
    */
-  export function createTable(table_name: string, column_definitions: string): boolean
+  export function createTable(table_name: string, column_definitions: string): Promise<boolean>
 
   /**
    * Select query

@@ -204,6 +204,60 @@ napi_value CreateTable(napi_env env, napi_callback_info info) {
     return result_value;
 }
 
+/** Function to Create Index */
+napi_value CreateIndex(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3];
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    if (argc < 3) {
+        napi_throw_error(env, NULL, "Expected 3 arguments: table_name, index_name, columns");
+        return NULL;
+    }
+
+    char table_name[256];
+    char index_name[256];
+    char columns[1024];
+    napi_get_value_string_utf8(env, args[0], table_name, sizeof(table_name), NULL);
+    napi_get_value_string_utf8(env, args[1], index_name, sizeof(index_name), NULL);
+    napi_get_value_string_utf8(env, args[2], columns, sizeof(columns), NULL);
+
+    char query[2048];
+    snprintf(query, sizeof(query), "SHOW INDEX FROM %s WHERE Key_name = '%s'", table_name, index_name);
+
+    if (mysql_query(conn, query)) {
+        char error_message[256];
+        snprintf(error_message, sizeof(error_message), "Failed to execute SHOW INDEX query: %s", mysql_error(conn));
+        napi_throw_error(env, NULL, error_message);
+        return NULL;
+    }
+
+    MYSQL_RES *result = mysql_store_result(conn);
+    if (!result) {
+        napi_throw_error(env, NULL, "Failed to retrieve result from SHOW INDEX query");
+        return NULL;
+    }
+
+    int index_exists = mysql_num_rows(result) > 0;
+    mysql_free_result(result);
+
+    if (!index_exists) {
+        snprintf(query, sizeof(query), "CREATE INDEX %s ON %s (%s)", index_name, table_name, columns);
+        if (mysql_query(conn, query)) {
+            char error_message[256];
+            snprintf(error_message, sizeof(error_message), "Failed to create index: %s", mysql_error(conn));
+            napi_throw_error(env, NULL, error_message);
+            return NULL;
+        }
+    } else {
+        printf("[CREATE INDEX] Index %s already exists on table %s\n", index_name, table_name);
+    }
+
+    napi_value result_value;
+    napi_get_boolean(env, 1, &result_value);
+    return result_value;
+}
+
 /** Function to Select Data from MySQL */
 napi_value Select(napi_env env, napi_callback_info info) {
     size_t argc = 1;
@@ -266,6 +320,9 @@ napi_value Select(napi_env env, napi_callback_info info) {
         bind[i].length = &lengths[i];
         bind[i].is_null = &is_nulls[i];
     }
+
+    // Initialize result to an undefined value
+    napi_get_undefined(env, &result);
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         napi_throw_error(env, NULL, "Failed to bind result");
