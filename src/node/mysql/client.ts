@@ -27,6 +27,7 @@ export class MySQL {
    */
   private async createTable(params: CreateTableParams<Record<any, any>>): Promise<boolean> {
     const { name, columns } = params
+    const foreignKeys: string[] = []
 
     const columnDefinitions = columns
       .map((column) => {
@@ -56,11 +57,23 @@ export class MySQL {
           def += ` DEFAULT ${typeof column.default === 'string' ? `'${column.default}'` : column.default}`
         }
 
+        if (column.reference) {
+          const onDelete = column.onDelete || 'CASCADE'
+          const onUpdate = column.onUpdate || 'CASCADE'
+          foreignKeys.push(
+            `FOREIGN KEY (${column.name}) REFERENCES ${column.reference.table}(${column.reference.column}) ` +
+              `ON DELETE ${onDelete} ON UPDATE ${onUpdate}`,
+          )
+        }
+
         return def
       })
       .join(', ')
 
-    return createTable(name, columnDefinitions)
+    const tableDefinition =
+      foreignKeys.length > 0 ? `${columnDefinitions}, ${foreignKeys.join(', ')}` : columnDefinitions
+
+    return createTable(name, tableDefinition)
   }
 
   /**

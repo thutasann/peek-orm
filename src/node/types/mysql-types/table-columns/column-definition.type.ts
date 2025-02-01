@@ -44,6 +44,21 @@ export type ColumnDefinition<TName> = {
    * Default value
    */
   default?: string | number | boolean
+  /**
+   * Reference to another table
+   */
+  reference?: {
+    table: string
+    column: string
+  }
+  /**
+   * On delete
+   */
+  onDelete?: 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'RESTRICT'
+  /**
+   * On update
+   */
+  onUpdate?: 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'RESTRICT'
 }
 
 /**
