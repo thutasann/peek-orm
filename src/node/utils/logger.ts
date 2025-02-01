@@ -6,6 +6,7 @@ export const COLORS = {
   yellow: '\x1b[33m',
   red: '\x1b[31m',
   gray: '\x1b[90m',
+  greenBright: '\x1b[92m',
 } as const
 
 /**

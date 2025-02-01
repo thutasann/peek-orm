@@ -153,10 +153,10 @@ export class MySQL {
     this.isConnected = await initialize(host, user, password, database, 3306)
 
     if (this.isConnected) {
-      logger.success('🚀 Connected to MySQL database\n')
+      console.log(`\n${COLORS.greenBright}🚀 Connected to MySQL database`)
       await this.createTablesFromSchemas(schemasDir)
     } else {
-      logger.error('🚨 Failed to connect to MySQL database')
+      console.log(`\n${COLORS.red}🚨 Failed to connect to MySQL database`)
       throw new Error('🚨 Failed to connect to MySQL database')
     }
 
