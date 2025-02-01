@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <mysql.h>
 #include <node_api.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,41 +230,105 @@ napi_value Select(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    //? Step 2: Use connection to execute query
-    MYSQL_RES *res;
-    if (mysql_query(conn, query) == 0) {
-        res = mysql_store_result(conn);
-        int num_fields = mysql_num_fields(res);
-        MYSQL_ROW row;
-        napi_value array;
-        napi_create_array(env, &array);
-        int index = 0;
-
-        while ((row = mysql_fetch_row(res))) {
-            napi_value obj;
-            napi_create_object(env, &obj);
-            for (int i = 0; i < num_fields; i++) {
-                napi_value value;
-                napi_create_string_utf8(env, row[i] ? row[i] : "NULL", NAPI_AUTO_LENGTH, &value);
-                MYSQL_FIELD *field = mysql_fetch_field_direct(res, i);
-                napi_set_named_property(env, obj, field->name, value);
-            }
-            napi_set_element(env, array, index++, obj);
-        }
-        mysql_free_result(res);
-
+    //? Step 2: Prepare and execute query
+    MYSQL_STMT *stmt = mysql_stmt_init(conn);
+    if (!stmt) {
         pool_return_connection(pool, conn);
-
-        return array;
+        napi_throw_error(env, NULL, "Failed to initialize statement");
+        return NULL;
     }
 
-    napi_throw_error(env, NULL, mysql_error(conn));
-    napi_get_undefined(env, &result);
+    if (mysql_stmt_prepare(stmt, query, strlen(query))) {
+        mysql_stmt_close(stmt);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        return NULL;
+    }
 
-    //? Step 3: Return connection to the pool
+    if (mysql_stmt_execute(stmt)) {
+        mysql_stmt_close(stmt);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        return NULL;
+    }
+
+    //? Step 3: Process result
+    MYSQL_RES *metadata = mysql_stmt_result_metadata(stmt);
+    if (!metadata) {
+        mysql_stmt_close(stmt);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        return NULL;
+    }
+
+    unsigned int num_fields = mysql_num_fields(metadata);
+    MYSQL_FIELD *fields = mysql_fetch_fields(metadata);
+
+    // Prepare bind buffers
+    MYSQL_BIND *bind = (MYSQL_BIND *)calloc(num_fields, sizeof(MYSQL_BIND));
+    char **row_data = (char **)malloc(num_fields * sizeof(char *));
+    unsigned long *lengths = (unsigned long *)malloc(num_fields * sizeof(unsigned long));
+    bool *is_nulls = (bool *)malloc(num_fields * sizeof(bool));
+
+    // Initialize buffers for each column
+    for (unsigned int i = 0; i < num_fields; i++) {
+        row_data[i] = (char *)malloc(8192);
+        bind[i].buffer_type = MYSQL_TYPE_STRING;
+        bind[i].buffer = row_data[i];
+        bind[i].buffer_length = 8192;
+        bind[i].length = &lengths[i];
+        bind[i].is_null = (bool *)&is_nulls[i];
+    }
+
+    if (mysql_stmt_bind_result(stmt, bind)) {
+        // Cleanup and throw error
+        for (unsigned int i = 0; i < num_fields; i++)
+            free(row_data[i]);
+        free(row_data);
+        free(bind);
+        free(lengths);
+        free(is_nulls);
+        mysql_free_result(metadata);
+        mysql_stmt_close(stmt);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, mysql_stmt_error(stmt));
+        return NULL;
+    }
+
+    //? Step 4: Create result array
+    napi_value array;
+    napi_create_array(env, &array);
+    uint32_t row_index = 0;
+
+    //? Step 5: Fetch and process rows
+    while (!mysql_stmt_fetch(stmt)) {
+        napi_value row_obj;
+        napi_create_object(env, &row_obj);
+
+        for (unsigned int i = 0; i < num_fields; i++) {
+            napi_value field_value;
+            if (is_nulls[i]) {
+                napi_get_null(env, &field_value);
+            } else {
+                napi_create_string_utf8(env, row_data[i], lengths[i], &field_value);
+            }
+            napi_set_named_property(env, row_obj, fields[i].name, field_value);
+        }
+        napi_set_element(env, array, row_index++, row_obj);
+    }
+
+    //? Step 6: Cleanup
+    for (unsigned int i = 0; i < num_fields; i++)
+        free(row_data[i]);
+    free(row_data);
+    free(bind);
+    free(lengths);
+    free(is_nulls);
+    mysql_free_result(metadata);
+    mysql_stmt_close(stmt);
     pool_return_connection(pool, conn);
 
-    return result;
+    return array;
 }
 
 /** Function to Insert Data into MySQL */
