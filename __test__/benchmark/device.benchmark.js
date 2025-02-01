@@ -11,14 +11,14 @@ async function device_benchmark_test() {
   /** Prepare the results array for table @type { any } */
   const results = []
 
-  const select_all_devices = benchmark_args(get_all_devices, [], iterations, true)
+  const select_all_devices = await benchmark_args(get_all_devices, [], iterations, true)
   results.push({
     Method: 'Get All Devices',
     Time: select_all_devices.toFixed(6),
   })
   results.push({})
 
-  const select_all_devices_native_query = benchmark_args(get_all_devices_native_query, [], iterations, true)
+  const select_all_devices_native_query = await benchmark_args(get_all_devices_native_query, [], iterations, true)
   results.push({
     Method: 'Select All Devices Native Query',
     Time: select_all_devices_native_query.toFixed(6),

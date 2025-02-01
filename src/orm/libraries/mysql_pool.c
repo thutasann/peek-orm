@@ -36,26 +36,39 @@ ConnectionPool *pool_create(const char *host, const char *user, const char *pass
         return NULL;
     }
 
-    pool->current_size = 0;
-    pthread_mutex_init(&pool->lock, NULL);
+    // Initialize mutex first for proper cleanup in case of failure
+    if (pthread_mutex_init(&pool->lock, NULL) != 0) {
+        free(pool);
+        return NULL;
+    }
 
-    pool->host = strdup(host);
-    pool->user = strdup(user);
-    pool->password = strdup(password);
-    pool->database = strdup(database);
+    // Copy strings with error checking
+    if (!(pool->host = strdup(host)) ||
+        !(pool->user = strdup(user)) ||
+        !(pool->password = strdup(password)) ||
+        !(pool->database = strdup(database))) {
+        pool_destroy(pool);
+        return NULL;
+    }
+
     pool->port = port;
+    pool->current_size = 0;
 
+    // Initialize all connections to NULL
+    memset(pool->connections, 0, sizeof(pool->connections));
     for (int i = 0; i < MAX_POOL_SIZE; i++) {
-        pool->connections[i].connection = NULL;
         pool->connections[i].in_use = false;
     }
 
+    // Create initial connections
     for (int i = 0; i < MIN_POOL_SIZE; i++) {
-        pool->connections[i].connection = create_connection(pool);
-        if (pool->connections[i].connection == NULL) {
+        MYSQL *conn = create_connection(pool);
+        if (!conn) {
             pool_destroy(pool);
             return NULL;
         }
+        pool->connections[i].connection = conn;
+        pool->current_size++;
     }
 
     return pool;
@@ -97,37 +110,40 @@ MYSQL *pool_get_connection(ConnectionPool *pool) {
 
     pthread_mutex_lock(&pool->lock);
 
-    // First, try to find an existig free connection
+    // First, try to reuse existing connections
     for (int i = 0; i < pool->current_size; i++) {
         if (!pool->connections[i].in_use) {
-            if (pool_validate_connection(pool->connections[i].connection)) {
-                pool->connections[i].in_use = true;
-                pthread_mutex_unlock(&pool->lock);
-                return pool->connections[i].connection;
-            } else {
-                mysql_close(pool->connections[i].connection);
-                pool->connections[i].connection = create_connection(pool);
-                if (pool->connections[i].connection) {
-                    pool->connections[i].in_use = true;
-                    pthread_mutex_unlock(&pool->lock);
-                    return pool->connections[i].connection;
-                }
-            }
-        }
-    }
+            MYSQL *conn = pool->connections[i].connection;
 
-    // If no free connection and pool not full, create new one
-    if (pool->current_size < MAX_POOL_SIZE) {
-        MYSQL *conn = create_connection(pool);
-        if (conn) {
-            pool->connections[pool->current_size].connection = conn;
-            pool->connections[pool->current_size].in_use = true;
-            pool->current_size++;
+            // Validate and potentially reconnect
+            if (!pool_validate_connection(conn)) {
+                mysql_close(conn);
+                conn = create_connection(pool);
+                if (!conn) {
+                    continue; // Try next connection if reconnection fails
+                }
+                pool->connections[i].connection = conn;
+            }
+
+            pool->connections[i].in_use = true;
             pthread_mutex_unlock(&pool->lock);
             return conn;
         }
     }
 
+    // If we need to expand the pool
+    if (pool->current_size < MAX_POOL_SIZE) {
+        MYSQL *conn = create_connection(pool);
+        if (conn) {
+            int idx = pool->current_size++;
+            pool->connections[idx].connection = conn;
+            pool->connections[idx].in_use = true;
+            pthread_mutex_unlock(&pool->lock);
+            return conn;
+        }
+    }
+
+    // Pool is full and all connections are in use
     pthread_mutex_unlock(&pool->lock);
     return NULL;
 }

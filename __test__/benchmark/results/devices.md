@@ -2,7 +2,7 @@
 
 | Method                          | Time (seconds) |
 | ------------------------------- | -------------- |
-| Get All Devices                 | 0.123248       |
+| Get All Devices                 | 0.129119       |
 | -                               | -              |
-| Select All Devices Native Query | 0.132339       |
+| Select All Devices Native Query | 0.110424       |
 | -                               | -              |
