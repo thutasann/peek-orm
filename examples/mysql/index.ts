@@ -1,28 +1,38 @@
+import { createServer, IncomingMessage, ServerResponse } from 'http'
+import { parse } from 'url'
 import { MySQL } from '../../lib'
 import { connectParams } from './configs/db'
+import { router } from './router'
+const PORT = 3000
 
-async function main() {
-  console.time('initialize_time')
+const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200)
+    res.end()
+    return
+  }
+
+  const parsedUrl = parse(req.url || '', true)
+  const path = parsedUrl.pathname
+
   MySQL.client()
     .connect(connectParams, './schemas')
-    .then(async (status) => {
+    .then((status) => {
       if (status.connected) {
-        // const all_devices = await get_devices()
-        // console.log('all_devices ==> ', all_devices)
-        // const device_by_id = await get_device_by_id(1)
-        // console.log('device_by_id ==>', device_by_id)
-        // await insert_device()
-        // await insert_multiple_devices()
-        // const all_devices_native = await get_devices_native()
-        // console.log('all_devices_native ==> ', all_devices_native?.length)
-        console.timeEnd('initialize_time')
+        router(req, res, path)
       } else {
         console.log('Failed to connect to MySQL')
       }
     })
-}
+})
 
-main()
+server.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}/`)
+})
 
 process.on('SIGINT', () => {
   MySQL.client().cleanup()
