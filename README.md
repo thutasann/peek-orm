@@ -18,6 +18,10 @@ Peek ORM is a high-performance Node.js ORM (Object-Relational Mapping) package t
 
 ---
 
+## Benchmark
+
+Benchmark results are available in the [benchmark](./__test__/benchmark/results/) folder.
+
 ## MySQL Connect
 
 Define the connection parameters and pass them to the `connect` method.
