@@ -15,4 +15,7 @@ napi_value Update(napi_env env, napi_callback_info info);
 napi_value Delete(napi_env env, napi_callback_info info);
 napi_value BulkInsert(napi_env env, napi_callback_info info);
 
+// =========================== TRIGGERS ===========================
+napi_value CreateTrigger(napi_env env, napi_callback_info info);
+
 #endif

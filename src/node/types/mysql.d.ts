@@ -58,6 +58,20 @@ declare module '*.node' {
   export function createTable(table_name: string, column_definitions: string): Promise<boolean>
 
   /**
+   * Create trigger
+   * @param trigger_name - Trigger name
+   * @param table_name - Table name
+   * @param event - Trigger event
+   * @param statement - Trigger statement
+   */
+  export function createTrigger(
+    trigger_name: string,
+    table_name: string,
+    event: string,
+    statement: string,
+  ): Promise<boolean>
+
+  /**
    * Select query
    * @param query - SQL query
    * @returns {Promise<any>} - Query result

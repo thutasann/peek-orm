@@ -567,3 +567,80 @@ napi_value BulkInsert(napi_env env, napi_callback_info info) {
     napi_throw_error(env, NULL, error_msg);
     return NULL;
 }
+
+// =========================== TRIGGERS ===========================
+
+/** Function to Create Trigger
+ * @example
+ * createTrigger(
+ *    'before_user_insert_timestamp',
+ *    'users',
+ *    'BEFORE',
+ *    'SET NEW.createdAt = NOW()'
+ * );
+ */
+napi_value CreateTrigger(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4];
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    if (argc < 4) {
+        napi_throw_error(env, NULL, "Expected 4 arguments: triggerName, tableName, triggerTime, triggerBody");
+        return NULL;
+    }
+
+    char trigger_name[256];
+    char table_name[256];
+    char trigger_time[16];
+    char trigger_body[4096];
+
+    napi_get_value_string_utf8(env, args[0], trigger_name, sizeof(trigger_name), NULL);
+    napi_get_value_string_utf8(env, args[1], table_name, sizeof(table_name), NULL);
+    napi_get_value_string_utf8(env, args[2], trigger_time, sizeof(trigger_time), NULL);
+    napi_get_value_string_utf8(env, args[3], trigger_body, sizeof(trigger_body), NULL);
+
+    if (!pool) {
+        napi_throw_error(env, NULL, "Database not initialized");
+        return NULL;
+    }
+
+    // Get connection from pool
+    MYSQL *conn = pool_get_connection(pool);
+    if (!conn) {
+        napi_throw_error(env, NULL, "Could not get database connection from pool");
+        return NULL;
+    }
+
+    // Drop existing trigger if it exists
+    char drop_query[512];
+    snprintf(drop_query, sizeof(drop_query), "DROP TRIGGER IF EXISTS %s", trigger_name);
+
+    if (mysql_query(conn, drop_query)) {
+        const char *error_msg = mysql_error(conn);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, error_msg);
+        return NULL;
+    }
+
+    // Create new trigger
+    char create_query[8192];
+    snprintf(create_query, sizeof(create_query),
+             "CREATE TRIGGER %s " // trigger name
+             "%s INSERT ON %s "   // BEFORE/AFTER + table name
+             "FOR EACH ROW "
+             "%s", // trigger body
+             trigger_name, trigger_time, table_name, trigger_body);
+
+    if (mysql_query(conn, create_query)) {
+        const char *error_msg = mysql_error(conn);
+        pool_return_connection(pool, conn);
+        napi_throw_error(env, NULL, error_msg);
+        return NULL;
+    }
+
+    pool_return_connection(pool, conn);
+
+    napi_value result;
+    napi_get_boolean(env, true, &result);
+    return result;
+}
