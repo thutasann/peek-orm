@@ -2,4 +2,4 @@
 
 | Method        | Time (seconds) |
 | ------------- | -------------- |
-| Get Big Table | 2.453061       |
+| Get Big Table | 2.335866       |

@@ -29,8 +29,14 @@ async function get_big_table() {
   return response
 }
 
+async function bulk_insert_big_table(payload: Partial<BigTable>[]) {
+  const response = await peek.bulkInsert<BigTable>('big_table', payload)
+  return response
+}
+
 export const bigTableService = {
   insert_big_table,
   mock_big_table_data,
   get_big_table,
+  bulk_insert_big_table,
 }

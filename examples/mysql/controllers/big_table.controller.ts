@@ -23,4 +23,11 @@ export class BigTableController {
     res.writeHead(200)
     res.end(JSON.stringify(response))
   }
+
+  async bulkInsertBigTable(res: ServerResponse) {
+    const payload = bigTableService.mock_big_table_data(3)
+    const bigTable = await bigTableService.bulk_insert_big_table(payload)
+    res.writeHead(200)
+    res.end(JSON.stringify(bigTable))
+  }
 }

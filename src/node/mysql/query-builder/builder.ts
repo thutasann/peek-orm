@@ -21,6 +21,7 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
   public offsetValue?: number
   public nativeQuery?: string
   public insertedValues?: { columns: string[]; values: any[][] }
+  public bulkInsertValues?: { columns: string[]; values: any[][] }
   public updatedValues?: { columns: string[]; where: Partial<T>; values: any[][] }
   public deletedValues?: { where: Partial<T> }
 
@@ -182,6 +183,28 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
     return this
   }
 
+  bulkInsert(tableName: string, values: any[]): QueryBuilder<T> {
+    this.tableName = tableName
+    const records = Array.isArray(values) ? values : [values]
+    if (records.length === 0) throw new Error('At least one record must be provided for bulk insert')
+
+    const columns = Object.keys(records[0])
+    if (columns.length === 0) throw new Error('Records must contain at least one column')
+
+    this.bulkInsertValues = {
+      columns,
+      values: records.map((record) => {
+        return Object.values(record).map((value) => {
+          if (value === null) return null
+          if (typeof value === 'string') return `'${value}'`
+          if (typeof value === 'boolean') return value ? 1 : 0
+          return value
+        })
+      }),
+    }
+    return this
+  }
+
   getQuery(): string {
     if (this.nativeQuery) return this.nativeQuery
     if (!this.tableName) throw new Error('Table name must be specified using from() method')
@@ -191,6 +214,13 @@ export class MySQLQueryBuilder<T = any> implements QueryBuilder<T> {
       const insertQuery = BuildQueryHelper.buildInsertQuery(this.tableName, this.insertedValues)
       console.log(`${COLORS.green}[INSERT]${COLORS.reset}: ${insertQuery}`)
       return insertQuery + ';'
+    }
+
+    // BULK INSERT Query
+    if (this.bulkInsertValues) {
+      const bulkInsertQuery = BuildQueryHelper.buildBulkInsertQuery(this.tableName, this.bulkInsertValues)
+      console.log(`${COLORS.greenBright}[BULK INSERT]${COLORS.reset}: ${bulkInsertQuery}`)
+      return bulkInsertQuery + ';'
     }
 
     // UPDATE Query

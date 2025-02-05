@@ -1,4 +1,5 @@
 import {
+  bulkInsert as bulkInsertQuery,
   deleteQuery,
   insert as insertQuery,
   select as selectQuery,
@@ -129,5 +130,20 @@ export class peek {
     const queryBuilder = createQueryBuilder<T>().from(table).delete(table, where)
     const result = await deleteQuery(queryBuilder.getQuery())
     return { result }
+  }
+
+  /**
+   * Execute a BULK INSERT query on a table
+   * @param table - Name of the table to insert into
+   * @param values - Array of records to insert
+   * @returns Promise with insert result and input values Array
+   */
+  static async bulkInsert<T extends Record<string, any>>(
+    table: string,
+    values: Partial<T>[],
+  ): Promise<{ result: InsertedResult; values: Partial<T>[] }> {
+    const queryBuilder = createQueryBuilder<T>().from(table).bulkInsert(table, values)
+    const result = await bulkInsertQuery(queryBuilder.getQuery())
+    return { result, values }
   }
 }

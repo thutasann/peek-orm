@@ -195,4 +195,11 @@ export interface QueryBuilder<T = any> {
    * .delete('users', { id: 1 })
    */
   delete(table: string, where: Partial<T>): QueryBuilder<T>
+
+  /**
+   * Adds a BULK INSERT clause to the query
+   * @param tableName - Table name
+   * @param values - Values
+   */
+  bulkInsert(tableName: string, values: any[]): QueryBuilder<T>
 }

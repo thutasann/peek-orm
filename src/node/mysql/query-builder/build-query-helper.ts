@@ -73,6 +73,21 @@ export class BuildQueryHelper {
   }
 
   /**
+   * Build a BULK INSERT query
+   * @param tableName - Name of the table to insert into
+   * @param data - Bulk insert data
+   * @returns BULK INSERT query
+   */
+  static buildBulkInsertQuery(tableName: string, data: { columns: string[]; values: any[][] }): string {
+    const columns = `(${data.columns.join(', ')})`
+    const values = data.values
+      .map((row) => `(${row.map((value) => (value === null ? 'NULL' : value)).join(', ')})`)
+      .join(', ')
+
+    return `INSERT INTO ${tableName} ${columns} VALUES ${values}`
+  }
+
+  /**
    * Build an UPDATE query
    * @param tableName - Name of the table to update
    * @param updateValues - Update values

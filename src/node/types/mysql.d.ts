@@ -84,4 +84,11 @@ declare module '*.node' {
    * @returns {Promise<any>} - Query result
    */
   export function deleteQuery(query: string): Promise<any>
+
+  /**
+   * Bulk insert query
+   * @param query - SQL query
+   * @returns {Promise<any>} - Query result
+   */
+  export function bulkInsert(query: string): Promise<any>
 }
