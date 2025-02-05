@@ -517,3 +517,91 @@ napi_value Delete(napi_env env, napi_callback_info info) {
 
     return result;
 }
+
+/** Function to Bulk Insert Data into MySQL */
+napi_value BulkInsert(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2], result;
+    napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+
+    if (argc < 2) {
+        napi_throw_error(env, NULL, "Expected 2 arguments: table_name and values array");
+        return NULL;
+    }
+
+    // Get table name
+    char table_name[256];
+    napi_get_value_string_utf8(env, args[0], table_name, sizeof(table_name), NULL);
+
+    // Get values array
+    bool is_array;
+    napi_is_array(env, args[1], &is_array);
+    if (!is_array) {
+        napi_throw_error(env, NULL, "Second argument must be an array of value strings");
+        return NULL;
+    }
+
+    uint32_t array_length;
+    napi_get_array_length(env, args[1], &array_length);
+    if (array_length == 0) {
+        napi_throw_error(env, NULL, "Values array cannot be empty");
+        return NULL;
+    }
+
+    if (!pool) {
+        napi_throw_error(env, NULL, "Database not initialized");
+        return NULL;
+    }
+
+    // Get a connection from the pool
+    MYSQL *conn = pool_get_connection(pool);
+    if (!conn) {
+        napi_throw_error(env, NULL, "Could not get database connection from pool");
+        return NULL;
+    }
+
+    // Build the bulk insert query
+    char query[16384] = {0}; // Increased buffer size for bulk insert
+    snprintf(query, sizeof(query), "INSERT INTO %s VALUES ", table_name);
+
+    // Append each set of values
+    for (uint32_t i = 0; i < array_length; i++) {
+        napi_value value_str;
+        napi_get_element(env, args[1], i, &value_str);
+
+        char values[1024];
+        napi_get_value_string_utf8(env, value_str, values, sizeof(values), NULL);
+
+        strcat(query, values);
+        if (i < array_length - 1) {
+            strcat(query, ",");
+        }
+    }
+
+    // Execute the bulk insert query
+    if (mysql_query(conn, query) == 0) {
+        my_ulonglong affected_rows = mysql_affected_rows(conn);
+        my_ulonglong last_id = mysql_insert_id(conn);
+
+        napi_value obj;
+        napi_create_object(env, &obj);
+
+        napi_value affected_rows_value;
+        napi_create_int64(env, (int64_t)affected_rows, &affected_rows_value);
+        napi_set_named_property(env, obj, "affectedRows", affected_rows_value);
+
+        napi_value insert_id_value;
+        napi_create_int64(env, (int64_t)last_id, &insert_id_value);
+        napi_set_named_property(env, obj, "insertId", insert_id_value);
+
+        pool_return_connection(pool, conn);
+        return obj;
+    }
+
+    // Handle error
+    napi_throw_error(env, NULL, mysql_error(conn));
+    napi_get_undefined(env, &result);
+
+    pool_return_connection(pool, conn);
+    return result;
+}
